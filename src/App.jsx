@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // Logo lives in /public/logo.png — replace with your actual file
 const LOGO_URL = "/logo.png";
 
