@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#C0001E" />
+    <meta name="description" content="Gold Supermarket – Kampala's fastest home delivery. Order groceries online from Kitintale & Mile 8, Gayaza Road." />
+    <meta name="keywords" content="Gold Supermarket, Kampala, Kitintale, Gayaza Road, grocery delivery, Uganda, MTN MoMo" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Gold Supermarket – Fast Delivery Kampala" />
+    <meta property="og:description" content="Order groceries online. Delivered in 30 minutes. MTN MoMo & Airtel Money accepted." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>Gold Supermarket – Fast Grocery Delivery Kampala</title>
+
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Sora', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #F7F2E8;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior: none;
+      }
+      #root { min-height: 100vh; }
+
+      /* Hide scrollbar on category chips */
+      ::-webkit-scrollbar { display: none; }
+      * { scrollbar-width: none; }
+
+      /* PWA splash */
+      .splash {
+        position: fixed; inset: 0;
+        background: linear-gradient(135deg, #C0001E 0%, #8B0015 100%);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.4s ease;
+      }
+      .splash img { width: 160px; animation: pulse 1s ease-in-out infinite; }
+      @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
