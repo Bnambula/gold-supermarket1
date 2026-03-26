@@ -1,788 +1,928 @@
 import React, { useState, useEffect, useRef } from "react";
-// Logo lives in /public/logo.png — replace with your actual file
-const LOGO_URL = "/logo.png";
 
-const G = {
-  gold: "#F5B800", goldDark: "#D49A00", goldLight: "#FFD84D",
-  red: "#C0001E", redDark: "#8B0015",
-  cream: "#FFFBF0", dark: "#1A0A00", charcoal: "#2D1A00",
-  smoke: "#F7F2E8", muted: "#9A8060",
-  green: "#1B8C4E", greenLight: "#E6F7EE", orange: "#E86A00",
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS — dark theme matching wireframe
+═══════════════════════════════════════════════════ */
+const T = {
+  bg:"#111111", bgCard:"#1C1C1C", bgElevated:"#242424", bgInput:"#2A2A2A",
+  border:"#2E2E2E",
+  gold:"#F5B800", goldDark:"#D49A00", goldLight:"#FFD84D",
+  red:"#C0001E", redDark:"#8B0015",
+  green:"#22C55E", greenDark:"#16A34A",
+  white:"#FFFFFF",
+  textPrimary:"#F0F0F0", textSecondary:"#9A9A9A", textMuted:"#484848",
 };
+const FONT = "'Sora','Nunito',sans-serif";
+const mkSKU = (c,u) => `PDT-${c}-${u}`;
+const ugx = n => `UGX ${Number(n).toLocaleString()}`;
 
-const mkSKU = (catCode, uid) => `PDT-${catCode}-${uid}`;
-
-const ALL_PRODUCTS = [
-  // ── FOOD & GROCERIES – Starches & Grains (FG01) ──
-  { sku: mkSKU("FG01","SWTR"), name: "SWT MB Long Grain Rice (UG)", variant: "5KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 23200, origPrice: 24400, stock: 42, unit: "bag", emoji: "🌾", express: true, discount: 5, badge: null },
-  { sku: mkSKU("FG01","ZHYR"), name: "Zhong YI Super Rice", variant: "5KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 26500, origPrice: 29500, stock: 18, unit: "bag", emoji: "🌾", express: false, discount: 10, badge: "Popular" },
-  { sku: mkSKU("FG01","SWMB"), name: "SWT MB Long Grain Rice", variant: "25KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 103000, origPrice: 110000, stock: 8, unit: "bag", emoji: "🌾", express: false, discount: 7, badge: null },
-  { sku: mkSKU("FG01","SWAR"), name: "SWT Aromatic Daily Use Rice", variant: "5KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 34200, origPrice: 36000, stock: 14, unit: "bag", emoji: "🌾", express: false, discount: 5, badge: null },
-  { sku: mkSKU("FG01","MGMF"), name: "Maganjo Maize Flour", variant: "2KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 7500, origPrice: 8000, stock: 55, unit: "pack", emoji: "🌽", express: true, discount: 6, badge: "Local Fav" },
-  { sku: mkSKU("FG01","NUMF"), name: "Numa Flour", variant: "2KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 6800, origPrice: 7200, stock: 30, unit: "pack", emoji: "🌽", express: true, discount: 6, badge: null },
-  { sku: mkSKU("FG01","SUPF"), name: "Supreme All-Purpose Flour", variant: "2KG", cat: "Food & Groceries", subcat: "Starches & Grains", price: 9200, origPrice: 10000, stock: 22, unit: "pack", emoji: "🫘", express: false, discount: 8, badge: null },
-  { sku: mkSKU("FG01","SLPA"), name: "Santa Lucia Pasta", variant: "500g", cat: "Food & Groceries", subcat: "Starches & Grains", price: 4500, origPrice: 5000, stock: 35, unit: "pack", emoji: "🍝", express: false, discount: 10, badge: null },
-  { sku: mkSKU("FG01","INDO"), name: "Indomie Noodles Chicken", variant: "70g×40pcs carton", cat: "Food & Groceries", subcat: "Starches & Grains", price: 32000, origPrice: 35500, stock: 20, unit: "carton", emoji: "🍜", express: true, discount: 10, badge: "Flash" },
-  // Cooking Essentials (FG02)
-  { sku: mkSKU("FG02","KKSG"), name: "Kakira Sugar", variant: "10KG", cat: "Food & Groceries", subcat: "Cooking Essentials", price: 35000, origPrice: 36300, stock: 30, unit: "bag", emoji: "🍬", express: false, discount: 3, badge: null },
-  { sku: mkSKU("FG02","SNSD"), name: "Sunseed Sunflower Cooking Oil", variant: "3L", cat: "Food & Groceries", subcat: "Cooking Essentials", price: 27800, origPrice: 31200, stock: 25, unit: "bottle", emoji: "🛢️", express: false, discount: 11, badge: "Sale" },
-  { sku: mkSKU("FG02","STRF"), name: "Star Fry Cooking Oil", variant: "12×1L sachets", cat: "Food & Groceries", subcat: "Cooking Essentials", price: 82800, origPrice: 92000, stock: 6, unit: "carton", emoji: "🛢️", express: false, discount: 10, badge: null },
-  { sku: mkSKU("FG02","MKWO"), name: "Mukwano Vegetable Oil", variant: "2L", cat: "Food & Groceries", subcat: "Cooking Essentials", price: 19500, origPrice: 21000, stock: 18, unit: "bottle", emoji: "🛢️", express: true, discount: 7, badge: null },
-  { sku: mkSKU("FG02","SALT"), name: "Iodized Table Salt", variant: "1KG", cat: "Food & Groceries", subcat: "Cooking Essentials", price: 1800, origPrice: 2000, stock: 80, unit: "pack", emoji: "🧂", express: true, discount: 10, badge: null },
-  // ── BEVERAGES ──
-  { sku: mkSKU("BV01","RHMN"), name: "Riham Oner Mango Juice", variant: "300ml×12", cat: "Beverages", subcat: "Juices & Soft Drinks", price: 14600, origPrice: 16700, stock: 28, unit: "carton", emoji: "🥭", express: true, discount: 13, badge: "Flash" },
-  { sku: mkSKU("BV01","RHAP"), name: "Riham Oner Apple Juice", variant: "300ml×12", cat: "Beverages", subcat: "Juices & Soft Drinks", price: 14600, origPrice: 16700, stock: 22, unit: "carton", emoji: "🍎", express: true, discount: 13, badge: "Flash" },
-  { sku: mkSKU("BV01","RKBM"), name: "Riham Rockboom Energy Drink", variant: "320ml×12", cat: "Beverages", subcat: "Juices & Soft Drinks", price: 18900, origPrice: 21700, stock: 15, unit: "carton", emoji: "⚡", express: false, discount: 13, badge: "Flash" },
-  { sku: mkSKU("BV01","COLA"), name: "Coca-Cola", variant: "500ml", cat: "Beverages", subcat: "Juices & Soft Drinks", price: 2000, origPrice: 2200, stock: 50, unit: "bottle", emoji: "🥤", express: true, discount: 9, badge: null },
-  { sku: mkSKU("BV01","MWTR"), name: "Mineral Water", variant: "1.5L", cat: "Beverages", subcat: "Juices & Soft Drinks", price: 2500, origPrice: 2800, stock: 60, unit: "bottle", emoji: "💧", express: true, discount: 11, badge: null },
-  { sku: mkSKU("BV02","JMWK"), name: "Jameson Irish Whiskey", variant: "750ml", cat: "Beverages", subcat: "Spirits & Wine", price: 88900, origPrice: 98000, stock: 8, unit: "bottle", emoji: "🥃", express: false, discount: 10, badge: null },
-  { sku: mkSKU("BV02","FC7R"), name: "Four Cousins Sweet Rose", variant: "750ml", cat: "Beverages", subcat: "Spirits & Wine", price: 29500, origPrice: 32800, stock: 12, unit: "bottle", emoji: "🍷", express: false, discount: 10, badge: null },
-  { sku: mkSKU("BV02","FCLR"), name: "Four Cousins Sweet Rose", variant: "1500ml", cat: "Beverages", subcat: "Spirits & Wine", price: 55000, origPrice: 61000, stock: 7, unit: "bottle", emoji: "🍷", express: false, discount: 10, badge: null },
-  { sku: mkSKU("BV03","JESA"), name: "Jesa UHT Low Fat Milk", variant: "500ml×12", cat: "Beverages", subcat: "Dairy & Milk", price: 22500, origPrice: 25200, stock: 20, unit: "carton", emoji: "🥛", express: true, discount: 11, badge: "Top Offer" },
-  { sku: mkSKU("BV03","FDST"), name: "Fresh Dairy Strawberry Milk", variant: "250ml×12", cat: "Beverages", subcat: "Dairy & Milk", price: 16800, origPrice: 18400, stock: 14, unit: "carton", emoji: "🍓", express: true, discount: 9, badge: null },
-  { sku: mkSKU("BV03","FDCH"), name: "Fresh Dairy Chocolate Milk", variant: "250ml×12", cat: "Beverages", subcat: "Dairy & Milk", price: 16800, origPrice: 18400, stock: 11, unit: "carton", emoji: "🍫", express: true, discount: 9, badge: null },
-  { sku: mkSKU("BV03","BLBD"), name: "Blue Band Margarine", variant: "500g", cat: "Beverages", subcat: "Dairy & Milk", price: 8900, origPrice: 9800, stock: 25, unit: "tub", emoji: "🧈", express: false, discount: 9, badge: null },
-  { sku: mkSKU("BV04","KLGG"), name: "Kellogg's Cornflakes", variant: "500g", cat: "Beverages", subcat: "Cereals & Breakfast", price: 18500, origPrice: 20000, stock: 18, unit: "box", emoji: "🥣", express: false, discount: 8, badge: null },
-  { sku: mkSKU("BV04","AUPC"), name: "Aunt Porridge Composite Flour", variant: "1KG", cat: "Beverages", subcat: "Cereals & Breakfast", price: 7200, origPrice: 8000, stock: 22, unit: "pack", emoji: "🌾", express: false, discount: 10, badge: "Local" },
-  // ── HOUSEHOLD & CLEANING ──
-  { sku: mkSKU("HC01","MDET"), name: "Magic Detergent Blue Breeze", variant: "10KG", cat: "Household & Cleaning", subcat: "Laundry", price: 39400, origPrice: 43700, stock: 15, unit: "bucket", emoji: "🧺", express: false, discount: 10, badge: "Top Offer" },
-  { sku: mkSKU("HC01","OMOW"), name: "Omo Detergent", variant: "3KG", cat: "Household & Cleaning", subcat: "Laundry", price: 18500, origPrice: 20000, stock: 20, unit: "box", emoji: "🧺", express: false, discount: 8, badge: null },
-  { sku: mkSKU("HC01","TOSS"), name: "Toss Detergent", variant: "2KG", cat: "Household & Cleaning", subcat: "Laundry", price: 12000, origPrice: 13500, stock: 18, unit: "pack", emoji: "🧺", express: false, discount: 11, badge: null },
-  { sku: mkSKU("HC01","WSTR"), name: "White Star Bar Soap", variant: "800g×6", cat: "Household & Cleaning", subcat: "Laundry", price: 14500, origPrice: 16000, stock: 30, unit: "pack", emoji: "🧼", express: false, discount: 9, badge: null },
-  { sku: mkSKU("HC02","JIK2"), name: "Jik Bleach Twin Pack", variant: "750ml×2", cat: "Household & Cleaning", subcat: "Home Care", price: 21200, origPrice: 23000, stock: 22, unit: "pack", emoji: "🧽", express: false, discount: 8, badge: "Top Offer" },
-  { sku: mkSKU("HC02","VIMC"), name: "Vim All-Purpose Cleaner", variant: "500g", cat: "Household & Cleaning", subcat: "Home Care", price: 5500, origPrice: 6000, stock: 35, unit: "tin", emoji: "🧽", express: false, discount: 8, badge: null },
-  { sku: mkSKU("HC02","SNLW"), name: "Sunlight Dishwashing Liquid", variant: "750ml", cat: "Household & Cleaning", subcat: "Home Care", price: 7200, origPrice: 8000, stock: 28, unit: "bottle", emoji: "🫧", express: false, discount: 10, badge: null },
-  { sku: mkSKU("HC03","EUTP"), name: "Eurotop Toilet Paper", variant: "10 rolls", cat: "Household & Cleaning", subcat: "Toiletries", price: 12500, origPrice: 14000, stock: 40, unit: "pack", emoji: "🧻", express: false, discount: 11, badge: null },
-  { sku: mkSKU("HC03","SNPD"), name: "Sanitary Pads", variant: "10pcs", cat: "Household & Cleaning", subcat: "Toiletries", price: 5500, origPrice: 6000, stock: 45, unit: "pack", emoji: "🌸", express: false, discount: 8, badge: null },
-  { sku: mkSKU("HC03","CLGT"), name: "Colgate Toothpaste", variant: "175g", cat: "Household & Cleaning", subcat: "Toiletries", price: 6200, origPrice: 7000, stock: 38, unit: "tube", emoji: "🦷", express: false, discount: 11, badge: null },
-  // ── PERSONAL & BABY CARE ──
-  { sku: mkSKU("PC01","DTTL"), name: "Dettol Antibacterial Soap", variant: "175g", cat: "Personal & Baby Care", subcat: "Personal Care", price: 4800, origPrice: 5200, stock: 50, unit: "bar", emoji: "🧼", express: true, discount: 8, badge: null },
-  { sku: mkSKU("PC01","LNZO"), name: "Lanzo Anti-Bacterial Soap", variant: "200g×18 carton", cat: "Personal & Baby Care", subcat: "Personal Care", price: 38000, origPrice: 41300, stock: 10, unit: "carton", emoji: "🧼", express: false, discount: 8, badge: "Bulk" },
-  { sku: mkSKU("PC01","LUXS"), name: "Lux Soap", variant: "150g×4", cat: "Personal & Baby Care", subcat: "Personal Care", price: 9500, origPrice: 10500, stock: 32, unit: "pack", emoji: "🛁", express: false, discount: 10, badge: null },
-  { sku: mkSKU("PC01","HDSH"), name: "Head & Shoulders Shampoo", variant: "400ml", cat: "Personal & Baby Care", subcat: "Personal Care", price: 18500, origPrice: 20500, stock: 18, unit: "bottle", emoji: "🚿", express: false, discount: 10, badge: null },
-  { sku: mkSKU("PC02","PMPS"), name: "Pampers Diapers", variant: "Size S – 44pcs", cat: "Personal & Baby Care", subcat: "Baby Care", price: 42000, origPrice: 46000, stock: 12, unit: "pack", emoji: "👶", express: false, discount: 9, badge: "Top Offer" },
-  { sku: mkSKU("PC02","HGSM"), name: "Huggies Diapers", variant: "Size M – 40pcs", cat: "Personal & Baby Care", subcat: "Baby Care", price: 45000, origPrice: 50000, stock: 9, unit: "pack", emoji: "👶", express: false, discount: 10, badge: "Top Offer" },
-  { sku: mkSKU("PC02","BWIP"), name: "Baby Wipes", variant: "80pcs", cat: "Personal & Baby Care", subcat: "Baby Care", price: 8500, origPrice: 9500, stock: 30, unit: "pack", emoji: "🌿", express: false, discount: 11, badge: null },
-  { sku: mkSKU("PC02","NLCT"), name: "Nestle Lactogen Formula", variant: "400g", cat: "Personal & Baby Care", subcat: "Baby Care", price: 38000, origPrice: 42000, stock: 8, unit: "tin", emoji: "🍼", express: false, discount: 10, badge: null },
-  // ── SNACKS & SEASONINGS ──
-  { sku: mkSKU("SK01","RYCO"), name: "Royco Mchuzi Mix Chicken", variant: "200g×2", cat: "Snacks & Seasonings", subcat: "Seasonings & Spices", price: 9700, origPrice: 10700, stock: 40, unit: "pack", emoji: "🍲", express: true, discount: 10, badge: "Top Offer" },
-  { sku: mkSKU("SK01","SMBL"), name: "Simba Mbili Curry Powder", variant: "100g", cat: "Snacks & Seasonings", subcat: "Seasonings & Spices", price: 4500, origPrice: 5000, stock: 28, unit: "pack", emoji: "🌶️", express: false, discount: 10, badge: null },
-  { sku: mkSKU("SK01","PLMS"), name: "Pilau Masala", variant: "100g", cat: "Snacks & Seasonings", subcat: "Seasonings & Spices", price: 5200, origPrice: 5800, stock: 22, unit: "pack", emoji: "🌶️", express: false, discount: 10, badge: null },
-  { sku: mkSKU("SK02","BRTN"), name: "Britania Biscuits Assorted", variant: "400g", cat: "Snacks & Seasonings", subcat: "Snacks & Biscuits", price: 7500, origPrice: 8500, stock: 30, unit: "pack", emoji: "🍪", express: false, discount: 12, badge: null },
-  { sku: mkSKU("SK02","SUMZ"), name: "Sumz Rings & Crisps", variant: "Multi-pack×10", cat: "Snacks & Seasonings", subcat: "Snacks & Biscuits", price: 5000, origPrice: 5800, stock: 35, unit: "pack", emoji: "🍟", express: true, discount: 14, badge: "Flash" },
-  { sku: mkSKU("SK02","GNTS"), name: "Roasted Groundnuts", variant: "500g", cat: "Snacks & Seasonings", subcat: "Snacks & Biscuits", price: 6500, origPrice: 7000, stock: 20, unit: "pack", emoji: "🥜", express: true, discount: 7, badge: "Local" },
+/* ═══════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════ */
+const INIT_CATS = [
+  {id:"FG",name:"Food & Groceries",icon:"🌾",color:"#E86A00",image:null},
+  {id:"BV",name:"Beverages",       icon:"🥤",color:"#1565C0",image:null},
+  {id:"HC",name:"Household",       icon:"🧴",color:"#2E7D32",image:null},
+  {id:"PC",name:"Personal & Baby", icon:"👶",color:"#7B1FA2",image:null},
+  {id:"SK",name:"Snacks & Spices", icon:"🍪",color:"#C0001E",image:null},
+];
+const INIT_PRODUCTS = [
+  {sku:mkSKU("FG01","SWTR"),name:"SWT MB Long Grain Rice (UG)",variant:"5KG",      cat:"FG",price:23200,origPrice:24400,stock:42,unit:"bag",   image:null,emoji:"🌾",express:true, discount:5, badge:"Popular"},
+  {sku:mkSKU("FG01","MGMF"),name:"Maganjo Maize Flour",         variant:"2KG",      cat:"FG",price:7500, origPrice:8000, stock:55,unit:"pack",  image:null,emoji:"🌽",express:true, discount:6, badge:"Local"},
+  {sku:mkSKU("FG01","INDO"),name:"Indomie Noodles Chicken",      variant:"70g×40pcs",cat:"FG",price:32000,origPrice:35500,stock:20,unit:"carton",image:null,emoji:"🍜",express:true, discount:10,badge:"Flash"},
+  {sku:mkSKU("FG02","KKSG"),name:"Kakira Sugar",                 variant:"10KG",     cat:"FG",price:35000,origPrice:36300,stock:30,unit:"bag",   image:null,emoji:"🍬",express:false,discount:3, badge:null},
+  {sku:mkSKU("FG02","SNSD"),name:"Sunseed Sunflower Oil",        variant:"3L",       cat:"FG",price:27800,origPrice:31200,stock:25,unit:"bottle",image:null,emoji:"🛢️",express:false,discount:11,badge:"Sale"},
+  {sku:mkSKU("FG02","STRF"),name:"Star Fry Cooking Oil",         variant:"12×1L",    cat:"FG",price:82800,origPrice:92000,stock:6, unit:"carton",image:null,emoji:"🛢️",express:false,discount:10,badge:null},
+  {sku:mkSKU("BV01","RHMN"),name:"Riham Oner Mango Juice",       variant:"300ml×12", cat:"BV",price:14600,origPrice:16700,stock:28,unit:"carton",image:null,emoji:"🥭",express:true, discount:13,badge:"Flash"},
+  {sku:mkSKU("BV01","RHAP"),name:"Riham Oner Apple Juice",       variant:"300ml×12", cat:"BV",price:14600,origPrice:16700,stock:22,unit:"carton",image:null,emoji:"🍎",express:true, discount:13,badge:"Flash"},
+  {sku:mkSKU("BV01","COLA"),name:"Coca-Cola",                    variant:"500ml",    cat:"BV",price:2000, origPrice:2200, stock:50,unit:"bottle",image:null,emoji:"🥤",express:true, discount:9, badge:null},
+  {sku:mkSKU("BV03","JESA"),name:"Jesa UHT Low Fat Milk",        variant:"500ml×12", cat:"BV",price:22500,origPrice:25200,stock:20,unit:"carton",image:null,emoji:"🥛",express:true, discount:11,badge:"Top Offer"},
+  {sku:mkSKU("BV03","FDST"),name:"Fresh Dairy Strawberry Milk",  variant:"250ml×12", cat:"BV",price:16800,origPrice:18400,stock:14,unit:"carton",image:null,emoji:"🍓",express:true, discount:9, badge:null},
+  {sku:mkSKU("BV02","JMWK"),name:"Jameson Irish Whiskey",        variant:"750ml",    cat:"BV",price:88900,origPrice:98000,stock:8, unit:"bottle",image:null,emoji:"🥃",express:false,discount:10,badge:null},
+  {sku:mkSKU("HC01","MDET"),name:"Magic Detergent Blue Breeze",  variant:"10KG",     cat:"HC",price:39400,origPrice:43700,stock:15,unit:"bucket",image:null,emoji:"🧺",express:false,discount:10,badge:"Top Offer"},
+  {sku:mkSKU("HC02","JIK2"),name:"Jik Bleach Twin Pack",         variant:"750ml×2",  cat:"HC",price:21200,origPrice:23000,stock:22,unit:"pack",  image:null,emoji:"🧽",express:false,discount:8, badge:null},
+  {sku:mkSKU("HC03","EUTP"),name:"Eurotop Toilet Paper",         variant:"10 rolls", cat:"HC",price:12500,origPrice:14000,stock:40,unit:"pack",  image:null,emoji:"🧻",express:false,discount:11,badge:null},
+  {sku:mkSKU("PC01","DTTL"),name:"Dettol Antibacterial Soap",    variant:"175g",     cat:"PC",price:4800, origPrice:5200, stock:50,unit:"bar",   image:null,emoji:"🧼",express:true, discount:8, badge:null},
+  {sku:mkSKU("PC02","PMPS"),name:"Pampers Diapers",              variant:"Size S-44",cat:"PC",price:42000,origPrice:46000,stock:12,unit:"pack",  image:null,emoji:"👶",express:false,discount:9, badge:"Top Offer"},
+  {sku:mkSKU("PC02","HGSM"),name:"Huggies Diapers",              variant:"Size M-40",cat:"PC",price:45000,origPrice:50000,stock:9, unit:"pack",  image:null,emoji:"👶",express:false,discount:10,badge:"Top Offer"},
+  {sku:mkSKU("SK01","RYCO"),name:"Royco Mchuzi Mix Chicken",     variant:"200g×2",   cat:"SK",price:9700, origPrice:10700,stock:40,unit:"pack",  image:null,emoji:"🍲",express:true, discount:10,badge:"Top Offer"},
+  {sku:mkSKU("SK02","SUMZ"),name:"Sumz Rings & Crisps",          variant:"Multi×10", cat:"SK",price:5000, origPrice:5800, stock:35,unit:"pack",  image:null,emoji:"🍟",express:true, discount:14,badge:"Flash"},
+  {sku:mkSKU("SK02","GNTS"),name:"Roasted Groundnuts",           variant:"500g",     cat:"SK",price:6500, origPrice:7000, stock:20,unit:"pack",  image:null,emoji:"🥜",express:true, discount:7, badge:"Local"},
+];
+const INIT_RIDERS = [
+  {id:"R1",name:"Kato Denis",   phone:"0774123456",bike:"UAX 123G",branch:"Kitintale",status:"available",rating:4.8,deliveries:12,photo:null},
+  {id:"R2",name:"Nakato Sarah", phone:"0755987654",bike:"UAB 456H",branch:"Mile 8",   status:"busy",     rating:4.9,deliveries:8, photo:null},
+  {id:"R3",name:"Mugisha Brian",phone:"0701456789",bike:"UBG 789K",branch:"Kitintale",status:"available",rating:4.7,deliveries:15,photo:null},
+];
+const INIT_ORDERS = [
+  {id:"OGS250326001",customer:"Aisha Namukasa",  phone:"0772345678",items:[{name:"SWT MB Rice",qty:2,price:23200},{name:"Royco Mix",qty:1,price:9700}], total:60100,fee:3000,location:"Ntinda", dist:2.1,branch:"Kitintale",status:"pending",   txId:"MOM12345678",rider:null,ts:"09:14",payMethod:"mtn"},
+  {id:"OGS250326002",customer:"Robert Ssempala", phone:"0753678901",items:[{name:"Sunseed Oil",qty:1,price:27800},{name:"Kakira Sugar",qty:1,price:35000}],total:66800,fee:4000,location:"Kireka", dist:4.2,branch:"Mile 8",   status:"verified",  txId:"AIR87654321",rider:"R3",ts:"09:32",payMethod:"airtel"},
+  {id:"OGS250326003",customer:"Grace Akello",    phone:"0700234567",items:[{name:"Mineral Water",qty:6,price:2500}],                                    total:19000,fee:4000,location:"Bukoto", dist:3.8,branch:"Kitintale",status:"on_the_way",txId:"MOM99887766",rider:"R1",ts:"08:55",payMethod:"mtn"},
+  {id:"OGS250326004",customer:"Banura Emmanuel", phone:"0781234567",items:[{name:"Pampers S",qty:1,price:42000},{name:"Baby Wipes",qty:2,price:8500}],  total:63000,fee:6000,location:"Mutungo",dist:6.1,branch:"Kitintale",status:"delivered",  txId:"MOM77665544",rider:"R2",ts:"08:10",payMethod:"mtn"},
 ];
 
-const CAT_META = {
-  "Food & Groceries": { icon: "🌾", code: "FG", color: "#E86A00", subcats: ["Starches & Grains","Cooking Essentials"] },
-  "Beverages":        { icon: "🥤", code: "BV", color: "#1565C0", subcats: ["Juices & Soft Drinks","Dairy & Milk","Cereals & Breakfast","Spirits & Wine"] },
-  "Household & Cleaning": { icon: "🧴", code: "HC", color: "#2E7D32", subcats: ["Laundry","Home Care","Toiletries"] },
-  "Personal & Baby Care": { icon: "👶", code: "PC", color: "#7B1FA2", subcats: ["Personal Care","Baby Care"] },
-  "Snacks & Seasonings":  { icon: "🍪", code: "SK", color: "#C0001E", subcats: ["Seasonings & Spices","Snacks & Biscuits"] },
-};
+/* ═══════════════════════════════════════════════════
+   SHARED COMPONENTS
+═══════════════════════════════════════════════════ */
+function ProdImg({image,emoji,size=48,radius=10}) {
+  return image
+    ? <img src={image} alt="" style={{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}}/>
+    : <div style={{width:size,height:size,borderRadius:radius,background:T.bgElevated,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.55,flexShrink:0}}>{emoji}</div>;
+}
 
-const CATS_MAIN = ["All", ...Object.keys(CAT_META)];
-const FLASH_ITEMS = ALL_PRODUCTS.filter(p => p.badge === "Flash");
+function StatusPill({status}) {
+  const M={pending:{label:"⏳ Pending",bg:"#2D2000",c:T.gold},verified:{label:"✓ Verified",bg:"#002D1A",c:T.green},on_the_way:{label:"🏍 On the Way",bg:"#002D1A",c:T.green},delivered:{label:"✅ Delivered",bg:"#1A1A1A",c:"#777"},cancelled:{label:"✕ Cancelled",bg:"#2D0000",c:T.red},available:{label:"● Available",bg:"#002D1A",c:T.green},busy:{label:"● Busy",bg:"#2D0000",c:T.red},offline:{label:"● Offline",bg:"#1A1A1A",c:"#777"},new:{label:"🆕 New",bg:"#001830",c:"#60A5FA"}};
+  const s=M[status]||M.pending;
+  return <span style={{background:s.bg,color:s.c,padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{s.label}</span>;
+}
 
-const RIDERS = [
-  { id:"R1", name:"Kato Denis", phone:"0774123456", status:"available", deliveries:12 },
-  { id:"R2", name:"Nakato Sarah", phone:"0755987654", status:"busy", deliveries:8 },
-  { id:"R3", name:"Mugisha Brian", phone:"0701456789", status:"available", deliveries:15 },
-];
+const Btn = ({children,onClick,style={},small,outline,danger,full}) => (
+  <button onClick={onClick} style={{background:danger?T.red:outline?"transparent":T.gold,color:danger?"#fff":outline?T.gold:T.bg,border:outline?`1.5px solid ${T.gold}`:danger?`1.5px solid ${T.red}`:"none",borderRadius:10,padding:small?"6px 12px":"11px 20px",fontWeight:800,fontSize:small?11:13,cursor:"pointer",fontFamily:FONT,whiteSpace:"nowrap",width:full?"100%":undefined,...style}}>{children}</button>
+);
 
-const initOrders = [
-  { id:"OGS250326001", customer:"Aisha Namukasa", phone:"0772345678", items:[{name:"SWT MB Long Grain Rice",qty:2,price:23200},{name:"Royco Mchuzi Mix",qty:1,price:9700}], total:60100, fee:3000, location:"Ntinda", dist:2.1, branch:"Kitintale", status:"pending", txId:"MOM12345678", rider:null, ts:"09:14" },
-  { id:"OGS250326002", customer:"Robert Ssempala", phone:"0753678901", items:[{name:"Sunseed Cooking Oil 3L",qty:1,price:27800},{name:"Kakira Sugar 10KG",qty:1,price:35000}], total:66800, fee:4000, location:"Kireka", dist:4.2, branch:"Kalerwe", status:"verified", txId:"AIR87654321", rider:"R3", ts:"09:32" },
-  { id:"OGS250326003", customer:"Grace Akello", phone:"0700234567", items:[{name:"Mineral Water 1.5L",qty:6,price:2500}], total:19000, fee:4000, location:"Bukoto", dist:3.8, branch:"Kitintale", status:"on_the_way", txId:"MOM99887766", rider:"R1", ts:"08:55" },
-];
+const Fld = ({label,value,onChange,placeholder,type="text",style={}}) => (
+  <div style={{marginBottom:10}}>
+    {label&&<div style={{fontSize:10,fontWeight:700,color:T.textSecondary,marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>{label}</div>}
+    <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:"100%",background:T.bgInput,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 13px",color:T.textPrimary,fontSize:13,outline:"none",fontFamily:FONT,boxSizing:"border-box",...style}}/>
+  </div>
+);
 
-const fmtUGX = n => `UGX ${Number(n).toLocaleString()}`;
+function ImgUpload({current,onUpload,label="Upload",size=64,radius=10}) {
+  const ref=useRef();
+  const handle=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>onUpload(ev.target.result);r.readAsDataURL(f);};
+  return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+      <div onClick={()=>ref.current.click()} style={{width:size,height:size,borderRadius:radius,background:T.bgInput,border:`2px dashed ${T.gold}55`,cursor:"pointer",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+        {current?<img src={current} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:size*0.38}}>📷</span>}
+      </div>
+      <input ref={ref} type="file" accept="image/*" style={{display:"none"}} onChange={handle}/>
+      <span style={{fontSize:9,color:T.textSecondary,cursor:"pointer"}} onClick={()=>ref.current.click()}>{label}</span>
+    </div>
+  );
+}
+
+function Sheet({open,onClose,title,children}) {
+  if(!open)return null;
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.75)"}}/>
+      <div style={{position:"relative",background:T.bgCard,borderRadius:"20px 20px 0 0",maxHeight:"92vh",overflowY:"auto",animation:"su .25s ease"}}>
+        <style>{`@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 18px 12px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bgCard,zIndex:1}}>
+          <span style={{fontWeight:800,fontSize:16,color:T.textPrimary}}>{title}</span>
+          <button onClick={onClose} style={{background:T.bgInput,border:"none",color:T.textSecondary,width:30,height:30,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+        </div>
+        <div style={{padding:"14px 18px 32px"}}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Toggle({on,onChange,label}) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>onChange(!on)}>
+      <div style={{width:42,height:24,borderRadius:12,background:on?T.green:T.bgInput,position:"relative",transition:"background .2s",flexShrink:0}}>
+        <div style={{position:"absolute",top:3,left:on?21:3,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,0.3)"}}/>
+      </div>
+      {label&&<span style={{fontSize:12,color:T.textSecondary}}>{label}</span>}
+    </div>
+  );
+}
 
 function useCountdown() {
-  const total = useRef(12*3600+40*60+17);
-  const [t,setT] = useState(total.current);
-  useEffect(() => { const id=setInterval(()=>setT(x=>x>0?x-1:0),1000); return ()=>clearInterval(id); },[]);
-  return { h:String(Math.floor(t/3600)).padStart(2,"0"), m:String(Math.floor((t%3600)/60)).padStart(2,"0"), s:String(t%60).padStart(2,"0") };
+  const [t,setT]=useState(12*3600+40*60+17);
+  useEffect(()=>{const id=setInterval(()=>setT(x=>x>0?x-1:0),1000);return()=>clearInterval(id);},[]);
+  return {h:String(Math.floor(t/3600)).padStart(2,"0"),m:String(Math.floor((t%3600)/60)).padStart(2,"0"),s:String(t%60).padStart(2,"0")};
 }
 
-const StatusBadge = ({status}) => {
-  const map={pending:{label:"⏳ Awaiting Verify",bg:"#FFF3CD",color:"#856404"},verified:{label:"✓ Verified",bg:"#D1ECF1",color:"#0C5460"},on_the_way:{label:"🏍️ On the Way",bg:"#D4EDDA",color:"#155724"},delivered:{label:"✅ Delivered",bg:"#E2E3E5",color:"#383D41"}};
-  const s=map[status]||map.pending;
-  return <span style={{background:s.bg,color:s.color,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{s.label}</span>;
-};
-
-function ProductCard({p,cart,addToCart,removeFromCart}) {
-  const inCart=cart[p.sku]||0, outStock=p.stock===0;
-  const catColor=CAT_META[p.cat]?.color||G.red;
+/* ═══════════════════════════════════════════════════
+   PRODUCT CARD
+═══════════════════════════════════════════════════ */
+function ProdCard({p,cart,add,rem,onTap,cats}) {
+  const qty=cart[p.sku]||0, out=p.stock===0;
+  const cat=cats?.find(c=>c.id===p.cat);
   return (
-    <div style={{background:"#fff",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,0.07)",border:`1.5px solid ${inCart?G.gold:"#F0E8D0"}`,position:"relative",opacity:outStock?0.6:1,display:"flex",flexDirection:"column"}}>
-      <div style={{position:"absolute",top:7,left:7,display:"flex",flexDirection:"column",gap:3,zIndex:2}}>
-        {p.badge==="Flash"&&<span style={{background:G.red,color:"#fff",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:8}}>⚡FLASH</span>}
-        {p.badge&&p.badge!=="Flash"&&<span style={{background:catColor,color:"#fff",fontSize:8,fontWeight:800,padding:"2px 5px",borderRadius:8}}>{p.badge}</span>}
-        {p.stock>0&&p.stock<=5&&<span style={{background:"#FFF3CD",color:"#856404",fontSize:8,fontWeight:700,padding:"2px 5px",borderRadius:8}}>Only {p.stock}!</span>}
+    <div onClick={()=>onTap(p)} style={{background:T.bgCard,borderRadius:14,overflow:"hidden",border:`1.5px solid ${qty?T.gold:T.border}`,cursor:"pointer",display:"flex",flexDirection:"column",transition:"border-color .15s"}}>
+      <div style={{height:115,background:T.bgElevated,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+        {p.image?<img src={p.image} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:50}}>{p.emoji}</span>}
+        {p.badge==="Flash"&&<div style={{position:"absolute",top:7,left:7,background:T.red,color:"#fff",fontSize:8,fontWeight:900,padding:"2px 6px",borderRadius:8}}>⚡FLASH</div>}
+        {p.badge&&p.badge!=="Flash"&&<div style={{position:"absolute",top:7,left:7,background:cat?.color||T.gold,color:"#fff",fontSize:8,fontWeight:800,padding:"2px 6px",borderRadius:8}}>{p.badge}</div>}
+        {p.express&&<div style={{position:"absolute",top:7,right:7,background:"rgba(0,0,0,0.7)",borderRadius:8,padding:"2px 6px",fontSize:8,color:T.gold,fontWeight:800}}>⚡30min</div>}
+        {p.discount>0&&<div style={{position:"absolute",bottom:7,right:7,background:T.green,color:"#fff",fontSize:9,fontWeight:900,padding:"2px 7px",borderRadius:10}}>-{p.discount}%</div>}
+        {out&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.65)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#fff",fontWeight:800,fontSize:11}}>Out of Stock</span></div>}
+        {!out&&p.stock<=5&&<div style={{position:"absolute",bottom:7,left:7,background:"#FF8C00",color:"#fff",fontSize:8,fontWeight:700,padding:"2px 5px",borderRadius:8}}>Only {p.stock}!</div>}
       </div>
-      {p.discount>0&&<div style={{position:"absolute",top:7,right:7,background:G.green,color:"#fff",fontSize:9,fontWeight:900,padding:"2px 6px",borderRadius:10}}>-{p.discount}%</div>}
-      <div style={{background:`linear-gradient(180deg,${G.cream},#fff)`,padding:"14px 0 8px",textAlign:"center",fontSize:38}}>{p.emoji}</div>
-      <div style={{padding:"6px 9px 10px",flex:1,display:"flex",flexDirection:"column"}}>
-        <div style={{fontSize:8,color:"#AAA",fontFamily:"monospace",marginBottom:2,letterSpacing:0.3}}>{p.sku}</div>
-        <div style={{fontWeight:700,fontSize:11,color:G.dark,lineHeight:1.3,marginBottom:1}}>{p.name}</div>
-        <div style={{fontSize:9,color:G.muted,marginBottom:4}}>{p.variant}</div>
-        <div style={{marginTop:"auto"}}>
-          <div style={{color:G.red,fontWeight:900,fontSize:13}}>{fmtUGX(p.price)}</div>
-          {p.origPrice>p.price&&<div style={{fontSize:9,color:"#BBB",textDecoration:"line-through"}}>{fmtUGX(p.origPrice)}</div>}
-        </div>
-        <div style={{marginTop:7}}>
-          {outStock?(
-            <div style={{width:"100%",textAlign:"center",fontSize:9,color:"#BBB",fontWeight:700,padding:"5px 0",background:"#F5F5F5",borderRadius:8}}>Out of Stock</div>
-          ):inCart?(
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <button onClick={()=>removeFromCart(p.sku)} style={{width:26,height:26,borderRadius:8,border:`2px solid ${G.gold}`,background:"#fff",fontWeight:900,cursor:"pointer"}}>−</button>
-              <span style={{fontWeight:900,fontSize:13}}>{inCart}</span>
-              <button onClick={()=>addToCart(p.sku)} style={{width:26,height:26,borderRadius:8,border:"none",background:G.gold,fontWeight:900,cursor:"pointer"}}>+</button>
-            </div>
-          ):(
-            <button onClick={()=>addToCart(p.sku)} style={{width:"100%",padding:"6px 0",border:"none",borderRadius:8,background:G.red,color:"#fff",fontWeight:800,fontSize:11,cursor:"pointer"}}>+ Add</button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Category Section with Load More ──────────────────────────────
-function CatSection({catName,items,cart,addToCart,removeFromCart,perRow=4,onSeeAll}) {
-  const [expanded,setExpanded]=useState(false);
-  const shown=expanded?items:items.slice(0,perRow);
-  const meta=CAT_META[catName];
-  return (
-    <div style={{marginBottom:8}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px 8px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:7}}>
-          <span style={{fontSize:20}}>{meta?.icon}</span>
-          <span style={{fontWeight:900,fontSize:15,color:G.dark}}>{catName}</span>
-          <span style={{fontSize:10,color:G.muted,background:"#F0EAE0",borderRadius:10,padding:"2px 7px"}}>{items.length}</span>
-        </div>
-        {onSeeAll&&<button onClick={onSeeAll} style={{fontSize:11,fontWeight:700,color:G.red,cursor:"pointer",background:"none",border:"none"}}>See All →</button>}
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 14px"}}>
-        {shown.map(p=><ProductCard key={p.sku} p={p} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart}/>)}
-      </div>
-      {items.length>perRow&&(
-        <button onClick={()=>setExpanded(e=>!e)} style={{display:"block",margin:"10px auto 4px",padding:"8px 22px",background:"#fff",border:`1.5px solid ${meta?.color||G.gold}55`,borderRadius:20,fontWeight:800,fontSize:11,color:meta?.color||G.goldDark,cursor:"pointer"}}>
-          {expanded?`Show Less ▲`:`Load More (${items.length-perRow} more) ▼`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ── Subcat Section inside single-cat view ────────────────────────
-function SubcatSection({subcat,items,cart,addToCart,removeFromCart}) {
-  const [expanded,setExpanded]=useState(false);
-  const INIT=4;
-  const shown=expanded?items:items.slice(0,INIT);
-  return (
-    <div style={{marginBottom:20}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px 8px"}}>
-        <span style={{fontWeight:800,fontSize:13,color:G.charcoal}}>{subcat}</span>
-        <span style={{fontSize:10,color:G.muted}}>{items.length} items</span>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 14px"}}>
-        {shown.map(p=><ProductCard key={p.sku} p={p} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart}/>)}
-      </div>
-      {items.length>INIT&&(
-        <button onClick={()=>setExpanded(e=>!e)} style={{display:"block",margin:"10px auto 4px",padding:"7px 20px",background:"#fff",border:`1.5px solid ${G.gold}55`,borderRadius:18,fontWeight:800,fontSize:11,color:G.goldDark,cursor:"pointer"}}>
-          {expanded?`Show Less ▲`:`Load More (${items.length-INIT} more) ▼`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════
-// CUSTOMER APP
-// ══════════════════════════════════════════════════════════════════
-function CustomerApp({onAdminUnlock}) {
-  const [cat,setCat]=useState("All");
-  const [search,setSearch]=useState("");
-  const [cart,setCart]=useState({});
-  const [screen,setScreen]=useState("home");
-  const [order,setOrder]=useState(null);
-  const [txId,setTxId]=useState("");
-  const [payMethod,setPayMethod]=useState("mtn");
-  const [lockTaps,setLockTaps]=useState(0);
-  const {h,m,s}=useCountdown();
-
-  const addToCart=sku=>setCart(c=>({...c,[sku]:(c[sku]||0)+1}));
-  const removeFromCart=sku=>setCart(c=>{const n={...c};if(n[sku]>1)n[sku]--;else delete n[sku];return n;});
-  const cartCount=Object.values(cart).reduce((a,b)=>a+b,0);
-  const cartItems=Object.entries(cart).map(([sku,qty])=>({...ALL_PRODUCTS.find(p=>p.sku===sku),qty})).filter(i=>i.sku);
-  const subtotal=cartItems.reduce((s,i)=>s+i.price*i.qty,0);
-  const estFee=4000, total=subtotal+estFee;
-
-  const handleLockTap=()=>{const n=lockTaps+1;setLockTaps(n);if(n>=5){onAdminUnlock();setLockTaps(0);}};
-  const placeOrder=()=>{
-    if(!txId)return alert("Please enter your transaction ID");
-    setOrder({id:`OGS${Date.now().toString().slice(-6)}`,customer:"You",phone:"07XXXXXXXX",items:cartItems.map(i=>({name:i.name,qty:i.qty,price:i.price})),total,fee:estFee,location:"Your Location",dist:3.2,branch:"Kitintale",status:"pending",txId,rider:null,ts:new Date().toLocaleTimeString("en-UG",{hour:"2-digit",minute:"2-digit"})});
-    setCart({});setScreen("tracking");
-  };
-
-  const filteredSearch=ALL_PRODUCTS.filter(p=>
-    p.name.toLowerCase().includes(search.toLowerCase())||
-    p.sku.toLowerCase().includes(search.toLowerCase())||
-    p.subcat.toLowerCase().includes(search.toLowerCase())||
-    p.cat.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const S={
-    wrap:{fontFamily:"'Sora','Nunito',sans-serif",background:G.smoke,minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:75},
-    hdr:{background:`linear-gradient(135deg,${G.red},${G.redDark})`,padding:"12px 14px 10px",position:"sticky",top:0,zIndex:50,boxShadow:"0 3px 12px rgba(0,0,0,0.25)"},
-    cartBtn:{background:G.gold,border:"none",borderRadius:20,padding:"7px 14px",fontWeight:800,fontSize:12,cursor:"pointer",color:G.dark,display:"flex",alignItems:"center",gap:5},
-    footer:{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #EEE",display:"flex",justifyContent:"space-around",padding:"8px 0 10px",zIndex:40},
-    footerBtn:a=>({display:"flex",flexDirection:"column",alignItems:"center",gap:2,fontSize:10,fontWeight:700,color:a?G.red:G.muted,cursor:"pointer",border:"none",background:"none",padding:"0 10px"}),
-    catChip:a=>({background:a?G.gold:"#fff",color:a?G.dark:G.muted,border:a?"none":"1.5px solid #E5D5B0",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,boxShadow:a?`0 2px 8px ${G.goldLight}88`:"none"}),
-    card:{background:"#fff",borderRadius:14,padding:16,border:"1.5px solid #F0E8D0",marginBottom:12},
-  };
-
-  // TRACKING
-  if(screen==="tracking"&&order) return (
-    <div style={S.wrap}>
-      <div style={S.hdr}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:G.gold,fontSize:18,cursor:"pointer"}}>←</button>
-          <span style={{color:G.gold,fontWeight:900,fontSize:16}}>Order Tracking</span>
-        </div>
-      </div>
-      <div style={{padding:16}}>
-        <div style={{background:`linear-gradient(135deg,${G.gold},${G.goldDark})`,borderRadius:16,padding:20,marginBottom:14,boxShadow:`0 4px 16px ${G.gold}44`}}>
-          <div style={{fontSize:10,fontWeight:700,color:G.charcoal,opacity:0.7}}>ORDER ID</div>
-          <div style={{fontWeight:900,fontSize:18,color:G.dark}}>{order.id}</div>
-          <div style={{marginTop:8}}><StatusBadge status={order.status}/></div>
-        </div>
-        {["Order Placed","Payment Verified","Rider Assigned","On the Way","Delivered"].map((step,i)=>{
-          const reached=["pending","verified","assigned","on_the_way","delivered"].indexOf(order.status)>=i-1;
-          return (
-            <div key={step} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:reached?G.gold:"#E5E5E5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:reached?G.dark:"#BBB",flexShrink:0}}>{i+1}</div>
-              <div style={{fontWeight:reached?700:400,color:reached?G.dark:G.muted,fontSize:14}}>{step}</div>
-            </div>
-          );
-        })}
-        <div style={S.card}>
-          {order.items.map((item,i)=>(
-            <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}>
-              <span>{item.name} ×{item.qty}</span><span style={{fontWeight:700}}>{fmtUGX(item.price*item.qty)}</span>
-            </div>
-          ))}
-          <div style={{borderTop:"1px dashed #E0D5BC",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between",fontSize:12,color:G.muted}}><span>Delivery Fee</span><span>{fmtUGX(order.fee)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,color:G.red,marginTop:6}}><span>TOTAL</span><span>{fmtUGX(order.total)}</span></div>
-        </div>
-        <div style={{background:"#E8F5FF",borderRadius:12,padding:14,fontSize:12,color:"#0066AA"}}>
-          <b>📱 WhatsApp Alerts Active</b><br/>You'll get a message when your rider is assigned and when delivered.
-        </div>
-      </div>
-    </div>
-  );
-
-  // CHECKOUT
-  if(screen==="checkout") return (
-    <div style={S.wrap}>
-      <div style={S.hdr}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={()=>setScreen("cart")} style={{background:"none",border:"none",color:G.gold,fontSize:18,cursor:"pointer"}}>←</button>
-          <span style={{color:G.gold,fontWeight:900,fontSize:16}}>Checkout</span>
-        </div>
-      </div>
-      <div style={{padding:16}}>
-        <div style={S.card}>
-          <div style={{fontWeight:800,fontSize:13,color:G.dark,marginBottom:10}}>📍 Delivery Location</div>
-          <div style={{background:G.smoke,borderRadius:10,padding:10,fontSize:12,color:G.muted}}>📡 GPS Detected: <b style={{color:G.dark}}>Ntinda (2.1 km · Kitintale branch)</b></div>
-          <div style={{marginTop:8,padding:"7px 10px",background:G.greenLight,borderRadius:8,fontSize:11,color:G.green,fontWeight:700}}>✅ Delivery available · Est. 28 minutes</div>
-          <div style={{marginTop:12,borderTop:"1px dashed #EEE",paddingTop:10}}>
-            {cartItems.map((i,k)=><div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4,color:G.charcoal}}><span>{i.name} ×{i.qty}</span><span>{fmtUGX(i.price*i.qty)}</span></div>)}
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:G.muted,marginTop:6}}><span>Delivery Fee</span><span>{fmtUGX(estFee)}</span></div>
-            <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,color:G.red,marginTop:8,paddingTop:8,borderTop:"1px solid #EEE"}}><span>TOTAL</span><span>{fmtUGX(total)}</span></div>
+      <div style={{padding:"9px 9px 11px",flex:1,display:"flex",flexDirection:"column"}}>
+        <div style={{fontSize:8,color:T.textMuted,fontFamily:"monospace",marginBottom:2}}>{p.sku}</div>
+        <div style={{fontWeight:700,fontSize:11,color:T.textPrimary,lineHeight:1.3,marginBottom:2,flex:1}}>{p.name}</div>
+        <div style={{fontSize:9,color:T.textSecondary,marginBottom:5}}>{p.variant}</div>
+        <div style={{color:T.gold,fontWeight:900,fontSize:13}}>{ugx(p.price)}</div>
+        {p.origPrice>p.price&&<div style={{fontSize:9,color:T.textMuted,textDecoration:"line-through"}}>{ugx(p.origPrice)}</div>}
+        {!out&&(
+          <div style={{marginTop:7}}>
+            {qty===0
+              ?<button onClick={e=>{e.stopPropagation();add(p.sku);}} style={{width:"100%",background:T.gold,border:"none",borderRadius:8,color:T.bg,fontWeight:800,fontSize:12,padding:"7px 0",cursor:"pointer",fontFamily:FONT}}>+ Add</button>
+              :<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:T.bgInput,borderRadius:8,padding:"2px 4px"}} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>rem(p.sku)} style={{background:"none",border:"none",color:T.gold,fontSize:20,cursor:"pointer",fontWeight:900,padding:"0 6px",fontFamily:FONT}}>−</button>
+                <span style={{fontWeight:900,color:T.textPrimary,fontSize:15}}>{qty}</span>
+                <button onClick={()=>add(p.sku)} style={{background:"none",border:"none",color:T.gold,fontSize:20,cursor:"pointer",fontWeight:900,padding:"0 6px",fontFamily:FONT}}>+</button>
+              </div>}
           </div>
-        </div>
-        <div style={S.card}>
-          <div style={{fontWeight:800,fontSize:13,color:G.dark,marginBottom:10}}>💳 Payment Method</div>
-          {["mtn","airtel"].map(pm=>(
-            <div key={pm} onClick={()=>setPayMethod(pm)} style={{display:"flex",alignItems:"center",gap:10,padding:10,borderRadius:10,border:`2px solid ${payMethod===pm?G.gold:"#EEE"}`,marginBottom:8,cursor:"pointer",background:payMethod===pm?G.cream:"#fff"}}>
-              <span style={{fontSize:22}}>{pm==="mtn"?"📱":"📲"}</span>
-              <div><div style={{fontWeight:700,fontSize:12}}>{pm==="mtn"?"MTN Mobile Money":"Airtel Money"}</div><div style={{fontSize:10,color:G.muted}}>{pm==="mtn"?"Send to: 0774 XXX XXX":"Send to: 0755 XXX XXX"}</div></div>
-              {payMethod===pm&&<span style={{marginLeft:"auto",color:G.gold,fontWeight:900}}>✓</span>}
-            </div>
-          ))}
-          <label style={{fontSize:11,fontWeight:700,color:G.muted,display:"block",marginBottom:5,marginTop:10}}>TRANSACTION ID</label>
-          <input value={txId} onChange={e=>setTxId(e.target.value)} placeholder="e.g. MOM12345678" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${txId?G.gold:"#EEE"}`,fontSize:13,outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
-        </div>
-        <button onClick={placeOrder} style={{width:"100%",padding:15,background:`linear-gradient(135deg,${G.red},${G.redDark})`,color:"#fff",border:"none",borderRadius:14,fontWeight:900,fontSize:15,cursor:"pointer",boxShadow:`0 4px 14px ${G.red}55`}}>
-          👉 I HAVE PAID — PLACE ORDER
-        </button>
-      </div>
-    </div>
-  );
-
-  // CART
-  if(screen==="cart") return (
-    <div style={S.wrap}>
-      <div style={S.hdr}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:G.gold,fontSize:18,cursor:"pointer"}}>←</button>
-          <span style={{color:G.gold,fontWeight:900,fontSize:16}}>🛒 My Cart ({cartCount})</span>
-        </div>
-      </div>
-      <div style={{padding:16}}>
-        {cartItems.length===0?(
-          <div style={{textAlign:"center",padding:60,color:G.muted}}>
-            <div style={{fontSize:50,marginBottom:12}}>🛒</div>
-            <div style={{fontWeight:700}}>Your cart is empty</div>
-            <button onClick={()=>setScreen("home")} style={{marginTop:16,background:G.gold,border:"none",borderRadius:10,padding:"10px 24px",fontWeight:800,cursor:"pointer"}}>Shop Now</button>
-          </div>
-        ):(
-          <>
-            {cartItems.map(item=>(
-              <div key={item.sku} style={{background:"#fff",borderRadius:14,padding:12,marginBottom:10,display:"flex",alignItems:"center",gap:12,border:"1.5px solid #F0E8D0"}}>
-                <span style={{fontSize:28,flexShrink:0}}>{item.emoji}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:700,fontSize:12,color:G.dark,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
-                  <div style={{fontSize:9,color:G.muted}}>{item.variant}</div>
-                  <div style={{fontSize:9,color:"#AAA",fontFamily:"monospace"}}>{item.sku}</div>
-                  <div style={{color:G.red,fontWeight:800,fontSize:13}}>{fmtUGX(item.price)}</div>
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                  <button onClick={()=>removeFromCart(item.sku)} style={{width:26,height:26,borderRadius:"50%",border:`2px solid ${G.gold}`,background:"#fff",fontWeight:900,cursor:"pointer"}}>−</button>
-                  <span style={{fontWeight:800,fontSize:14,minWidth:18,textAlign:"center"}}>{item.qty}</span>
-                  <button onClick={()=>addToCart(item.sku)} style={{width:26,height:26,borderRadius:"50%",border:"none",background:G.gold,fontWeight:900,cursor:"pointer"}}>+</button>
-                </div>
-              </div>
-            ))}
-            <div style={{...S.card,marginTop:8}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:G.muted,marginBottom:5}}><span>Subtotal ({cartCount} items)</span><span>{fmtUGX(subtotal)}</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:G.muted}}><span>Est. Delivery</span><span>{fmtUGX(estFee)}</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:16,color:G.red,marginTop:8,paddingTop:8,borderTop:"1px solid #EEE"}}><span>TOTAL</span><span>{fmtUGX(total)}</span></div>
-            </div>
-            <button onClick={()=>setScreen("checkout")} style={{width:"100%",marginTop:14,padding:15,background:`linear-gradient(135deg,${G.red},${G.redDark})`,color:"#fff",border:"none",borderRadius:14,fontWeight:900,fontSize:14,cursor:"pointer",boxShadow:`0 4px 14px ${G.red}44`}}>
-              Proceed to Checkout →
-            </button>
-          </>
         )}
       </div>
     </div>
   );
+}
 
-  // ── HOME ──
-  return (
-    <div style={S.wrap}>
-      <div style={S.hdr}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <img src={LOGO_URL} alt="Gold Supermarket" style={{height:42,width:"auto",objectFit:"contain",filter:"drop-shadow(0 1px 4px rgba(0,0,0,0.3))"}} onError={e=>{e.target.style.display="none";}} />
-            <div>
-              <div style={{color:G.gold,fontWeight:900,fontSize:15,letterSpacing:0.3,lineHeight:1.1}}>GOLD SUPERMARKET</div>
-              <div style={{color:"#FFD84D88",fontSize:9,fontWeight:600}}>📍 Kitintale · Mile 8, Gayaza Rd</div>
+/* ═══════════════════════════════════════════════════
+   CUSTOMER APP
+═══════════════════════════════════════════════════ */
+function CustomerApp({products,categories,onAdminUnlock}) {
+  const [screen,setScreen]=useState("home");
+  const [cat,setCat]=useState("all");
+  const [search,setSearch]=useState("");
+  const [cart,setCart]=useState({});
+  const [txId,setTxId]=useState("");
+  const [payMethod,setPayMethod]=useState("mtn");
+  const [placedOrder,setPlacedOrder]=useState(null);
+  const [detailProd,setDetailProd]=useState(null);
+  const [lockTaps,setLockTaps]=useState(0);
+  const [focused,setFocused]=useState(false);
+  const {h,m,s}=useCountdown();
+
+  const add=sku=>setCart(c=>({...c,[sku]:(c[sku]||0)+1}));
+  const rem=sku=>setCart(c=>{const n={...c};if(n[sku]>1)n[sku]--;else delete n[sku];return n;});
+  const cartCount=Object.values(cart).reduce((a,b)=>a+b,0);
+  const cartItems=Object.entries(cart).map(([sku,qty])=>({...products.find(p=>p.sku===sku),qty})).filter(i=>i.sku);
+  const subtotal=cartItems.reduce((s,i)=>s+i.price*i.qty,0);
+  const fee=4000,total=subtotal+fee;
+
+  const lockTap=()=>{const n=lockTaps+1;setLockTaps(n);if(n>=5){onAdminUnlock();setLockTaps(0);}};
+
+  const placeOrder=()=>{
+    if(!txId.trim())return alert("Enter your transaction ID");
+    const o={id:`OGS${Date.now().toString().slice(-6)}`,customer:"You",phone:"07XXXXXXXX",items:cartItems.map(i=>({name:i.name,qty:i.qty,price:i.price})),total,fee,location:"Your Location",dist:3.2,branch:"Kitintale",status:"pending",txId:txId.trim(),rider:null,ts:new Date().toLocaleTimeString("en-UG",{hour:"2-digit",minute:"2-digit"}),payMethod};
+    setPlacedOrder(o);setCart({});setTxId("");setScreen("tracking");
+  };
+
+  const filtered=products.filter(p=>{
+    const inCat=cat==="all"||p.cat===cat;
+    const q=search.toLowerCase();
+    const inSearch=!search||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||p.variant.toLowerCase().includes(q);
+    return inCat&&inSearch;
+  });
+  const flashItems=products.filter(p=>p.badge==="Flash"&&p.stock>0);
+
+  const Nav=()=>(
+    <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:T.bgCard,borderTop:`1px solid ${T.border}`,display:"flex",zIndex:90}}>
+      {[["home","🏠","Home"],["cart","🛒",cartCount>0?`Cart (${cartCount})`:"Cart"],["tracking","📦","Orders"],["lock","🔒","Staff"]].map(([id,ico,lbl])=>{
+        const active=(screen===id)||(screen==="detail"&&id==="home");
+        return <button key={id} onClick={id==="lock"?lockTap:()=>setScreen(id)} style={{flex:1,background:"none",border:"none",padding:"10px 4px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer",color:active?T.gold:T.textSecondary,fontFamily:FONT}}>
+          <span style={{fontSize:19}}>{ico}</span>
+          <span style={{fontSize:9,fontWeight:700}}>{lbl}</span>
+        </button>;
+      })}
+    </div>
+  );
+
+  // ── Detail
+  if(detailProd) return (
+    <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.textPrimary}}>
+      <div style={{position:"relative"}}>
+        <div style={{height:290,background:T.bgElevated,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {detailProd.image?<img src={detailProd.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:110}}>{detailProd.emoji}</span>}
+        </div>
+        <button onClick={()=>setDetailProd(null)} style={{position:"absolute",top:14,left:14,background:"rgba(0,0,0,0.65)",border:"none",borderRadius:"50%",width:38,height:38,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
+        {detailProd.discount>0&&<div style={{position:"absolute",top:14,right:14,background:T.green,color:"#fff",fontWeight:900,fontSize:13,padding:"4px 10px",borderRadius:12}}>-{detailProd.discount}%</div>}
+      </div>
+      <div style={{padding:"16px 16px 110px"}}>
+        <div style={{fontSize:9,color:T.textMuted,fontFamily:"monospace",marginBottom:3}}>{detailProd.sku}</div>
+        <h2 style={{fontWeight:900,fontSize:20,marginBottom:4,color:T.textPrimary}}>{detailProd.name}</h2>
+        <div style={{fontSize:12,color:T.textSecondary,marginBottom:12}}>{detailProd.variant} · per {detailProd.unit}</div>
+        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:8}}>
+          <span style={{fontWeight:900,fontSize:26,color:T.gold}}>{ugx(detailProd.price)}</span>
+          {detailProd.origPrice>detailProd.price&&<span style={{fontSize:14,color:T.textMuted,textDecoration:"line-through"}}>{ugx(detailProd.origPrice)}</span>}
+        </div>
+        {detailProd.express&&<div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#2D1A00",border:`1px solid ${T.gold}44`,borderRadius:8,padding:"5px 12px",marginBottom:14,fontSize:12,color:T.gold}}>⚡ Express — arrives in 30 min</div>}
+        <div style={{background:T.bgCard,borderRadius:12,padding:14,marginBottom:16}}>
+          {[["SKU",detailProd.sku],["Category",categories.find(c=>c.id===detailProd.cat)?.name||detailProd.cat],["Unit",detailProd.unit],["Stock",detailProd.stock>0?`${detailProd.stock} available`:"Out of stock"]].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.border}`,fontSize:12}}>
+              <span style={{color:T.textSecondary}}>{k}</span><span style={{color:T.textPrimary,fontWeight:600}}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {detailProd.stock>0&&(
+        <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:T.bgCard,borderTop:`1px solid ${T.border}`,padding:"12px 16px 20px"}}>
+          {(cart[detailProd.sku]||0)===0
+            ?<Btn full style={{padding:14,fontSize:15,borderRadius:12}} onClick={()=>add(detailProd.sku)}>+ Add to Cart</Btn>
+            :<div style={{display:"flex",alignItems:"center",gap:12}}>
+              <button onClick={()=>rem(detailProd.sku)} style={{width:46,height:46,borderRadius:12,background:T.bgInput,border:`1px solid ${T.border}`,color:T.gold,fontSize:24,cursor:"pointer",fontWeight:900}}>−</button>
+              <span style={{flex:1,textAlign:"center",fontWeight:900,fontSize:20,color:T.textPrimary}}>{cart[detailProd.sku]}</span>
+              <button onClick={()=>add(detailProd.sku)} style={{width:46,height:46,borderRadius:12,background:T.gold,border:"none",color:T.bg,fontSize:24,cursor:"pointer",fontWeight:900}}>+</button>
+            </div>}
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Tracking
+  if(screen==="tracking"){
+    const order=placedOrder||INIT_ORDERS[2];
+    const steps=["Order Placed","Payment Verified","Rider Assigned","On the Way","Delivered"];
+    const si=["pending","verified","assigned","on_the_way","delivered"].indexOf(order.status);
+    return (
+      <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.textPrimary,paddingBottom:72}}>
+        <div style={{background:T.bgCard,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,borderBottom:`1px solid ${T.border}`}}>
+          <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:T.gold,fontSize:20,cursor:"pointer"}}>←</button>
+          <span style={{fontWeight:800,fontSize:16}}>Track Order</span>
+        </div>
+        <div style={{padding:14}}>
+          <div style={{background:`linear-gradient(135deg,${T.gold},${T.goldDark})`,borderRadius:16,padding:18,marginBottom:14}}>
+            <div style={{fontSize:10,fontWeight:700,color:"rgba(0,0,0,0.45)",marginBottom:3}}>ORDER ID</div>
+            <div style={{fontWeight:900,fontSize:22,color:T.bg}}>{order.id}</div>
+            <div style={{marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <StatusPill status={order.status}/><span style={{fontSize:11,color:"rgba(0,0,0,0.4)"}}>{order.ts}</span>
             </div>
           </div>
-          <button onClick={()=>setScreen("cart")} style={S.cartBtn}>
-            🛒 <span style={{background:G.red,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>{cartCount}</span>
+          <div style={{background:T.bgCard,borderRadius:14,padding:16,marginBottom:12}}>
+            {steps.map((step,i)=>{
+              const done=i<=si;
+              return <div key={step} style={{display:"flex",alignItems:"center",gap:12,marginBottom:i<steps.length-1?18:0}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:done?T.gold:T.bgInput,border:i===si+1?`2px solid ${T.gold}`:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:done?T.bg:T.textMuted,flexShrink:0}}>{done?"✓":i+1}</div>
+                <span style={{fontWeight:done?700:400,color:done?T.textPrimary:T.textSecondary,fontSize:13}}>{step}</span>
+                {i===3&&order.status==="on_the_way"&&<span style={{marginLeft:"auto",fontSize:18}}>🏍️</span>}
+              </div>;
+            })}
+          </div>
+          <div style={{background:T.bgCard,borderRadius:14,padding:16,marginBottom:12}}>
+            {order.items.map((it,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:5,color:T.textSecondary}}><span>{it.name} ×{it.qty}</span><span style={{color:T.textPrimary,fontWeight:700}}>{ugx(it.price*it.qty)}</span></div>)}
+            <div style={{borderTop:`1px dashed ${T.border}`,marginTop:8,paddingTop:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.textSecondary,marginBottom:4}}><span>Delivery Fee</span><span>{ugx(order.fee)}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,color:T.gold}}><span>TOTAL</span><span>{ugx(order.total)}</span></div>
+            </div>
+          </div>
+          <div style={{background:"#001830",border:`1px solid #1565C044`,borderRadius:12,padding:14,fontSize:12,color:"#60A5FA"}}>
+            <b>📱 WhatsApp Updates Active</b><br/>You'll get alerts at each stage of your delivery.
+          </div>
+        </div>
+        <Nav/>
+      </div>
+    );
+  }
+
+  // ── Checkout
+  if(screen==="checkout") return (
+    <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.textPrimary,paddingBottom:20}}>
+      <div style={{background:T.bgCard,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,borderBottom:`1px solid ${T.border}`}}>
+        <button onClick={()=>setScreen("cart")} style={{background:"none",border:"none",color:T.gold,fontSize:20,cursor:"pointer"}}>←</button>
+        <span style={{fontWeight:800,fontSize:16}}>Checkout</span>
+      </div>
+      <div style={{padding:14,display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{background:T.bgCard,borderRadius:14,padding:16,border:`1px solid ${T.border}`}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:10}}>📍 Delivery Location</div>
+          <div style={{background:T.bgInput,borderRadius:10,padding:10,fontSize:12,color:T.textSecondary}}>📡 GPS: <b style={{color:T.textPrimary}}>Ntinda, 2.1km · Kitintale Branch</b></div>
+          <div style={{marginTop:8,padding:"8px 12px",background:"#002D1A",borderRadius:8,fontSize:11,color:T.green,fontWeight:700}}>✅ Delivery available · Est. 28 min · Fee: {ugx(fee)}</div>
+        </div>
+        <div style={{background:T.bgCard,borderRadius:14,padding:16,border:`1px solid ${T.border}`}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:10}}>Order Summary</div>
+          {cartItems.map((i,k)=><div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:5,color:T.textSecondary}}><span>{i.name} ×{i.qty}</span><span style={{color:T.textPrimary}}>{ugx(i.price*i.qty)}</span></div>)}
+          <div style={{borderTop:`1px solid ${T.border}`,marginTop:8,paddingTop:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.textSecondary,marginBottom:4}}><span>Subtotal</span><span>{ugx(subtotal)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.textSecondary,marginBottom:4}}><span>Delivery Fee</span><span>{ugx(fee)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,color:T.gold,marginTop:6}}><span>TOTAL</span><span>{ugx(total)}</span></div>
+          </div>
+        </div>
+        <div style={{background:T.bgCard,borderRadius:14,padding:16,border:`1px solid ${T.border}`}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:12}}>💳 Payment Method</div>
+          {[["mtn","📱","MTN Mobile Money","Send to: 0774 XXX XXX"],["airtel","📲","Airtel Money","Send to: 0755 XXX XXX"]].map(([id,ico,name,hint])=>(
+            <div key={id} onClick={()=>setPayMethod(id)} style={{display:"flex",alignItems:"center",gap:12,padding:12,borderRadius:12,border:`2px solid ${payMethod===id?T.gold:T.border}`,marginBottom:8,cursor:"pointer",background:payMethod===id?"#2D1A00":T.bgInput}}>
+              <span style={{fontSize:24}}>{ico}</span>
+              <div><div style={{fontWeight:700,fontSize:13,color:T.textPrimary}}>{name}</div><div style={{fontSize:10,color:T.textSecondary}}>{hint}</div></div>
+              {payMethod===id&&<span style={{marginLeft:"auto",color:T.gold,fontWeight:900,fontSize:18}}>✓</span>}
+            </div>
+          ))}
+          <Fld label="Transaction ID" value={txId} onChange={setTxId} placeholder="e.g. MOM12345678" style={{fontFamily:"monospace",marginTop:4}}/>
+        </div>
+        <Btn full style={{padding:16,fontSize:15,borderRadius:14}} onClick={placeOrder}>👉 I HAVE PAID — PLACE ORDER</Btn>
+      </div>
+    </div>
+  );
+
+  // ── Cart
+  if(screen==="cart") return (
+    <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.textPrimary,paddingBottom:72}}>
+      <div style={{background:T.bgCard,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${T.border}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:T.gold,fontSize:20,cursor:"pointer"}}>←</button>
+          <span style={{fontWeight:800,fontSize:16}}>🛒 My Cart</span>
+        </div>
+        {cartItems.length>0&&<button onClick={()=>setCart({})} style={{background:"none",border:"none",color:T.red,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>Clear All</button>}
+      </div>
+      <div style={{padding:14}}>
+        {cartItems.length===0
+          ?<div style={{textAlign:"center",padding:"60px 20px",color:T.textSecondary}}>
+            <div style={{fontSize:60,marginBottom:12}}>🛒</div>
+            <div style={{fontWeight:700,fontSize:16,marginBottom:8,color:T.textPrimary}}>Your cart is empty</div>
+            <Btn onClick={()=>setScreen("home")}>Browse Products</Btn>
+          </div>
+          :<>
+            {cartItems.map(item=>(
+              <div key={item.sku} style={{background:T.bgCard,borderRadius:14,padding:12,marginBottom:10,display:"flex",alignItems:"center",gap:12,border:`1px solid ${T.border}`}}>
+                <ProdImg image={item.image} emoji={item.emoji} size={56} radius={10}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:12,color:T.textPrimary,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
+                  <div style={{fontSize:9,color:T.textSecondary}}>{item.variant}</div>
+                  <div style={{color:T.gold,fontWeight:900,fontSize:13}}>{ugx(item.price)}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <button onClick={()=>rem(item.sku)} style={{width:28,height:28,borderRadius:8,background:T.bgInput,border:`1px solid ${T.border}`,color:T.gold,fontWeight:900,cursor:"pointer",fontSize:14}}>−</button>
+                  <span style={{fontWeight:900,fontSize:14,minWidth:20,textAlign:"center",color:T.textPrimary}}>{item.qty}</span>
+                  <button onClick={()=>add(item.sku)} style={{width:28,height:28,borderRadius:8,background:T.gold,border:"none",color:T.bg,fontWeight:900,cursor:"pointer",fontSize:14}}>+</button>
+                </div>
+              </div>
+            ))}
+            <div style={{background:T.bgCard,borderRadius:14,padding:16,marginTop:8,border:`1px solid ${T.border}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.textSecondary,marginBottom:5}}><span>Subtotal ({cartCount} items)</span><span>{ugx(subtotal)}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.textSecondary}}><span>Est. Delivery</span><span>{ugx(fee)}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:16,color:T.gold,marginTop:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}><span>TOTAL</span><span>{ugx(total)}</span></div>
+            </div>
+            <Btn full style={{padding:15,fontSize:15,borderRadius:14,marginTop:14}} onClick={()=>setScreen("checkout")}>Proceed to Checkout →</Btn>
+          </>}
+      </div>
+      <Nav/>
+    </div>
+  );
+
+  // ── HOME
+  return (
+    <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.textPrimary,paddingBottom:72}}>
+      {/* Header */}
+      <div style={{background:T.bgCard,padding:"12px 14px 10px",position:"sticky",top:0,zIndex:50,borderBottom:`1px solid ${T.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <img src="/logo.png" alt="Gold Supermarket" style={{height:38,objectFit:"contain"}} onError={e=>{e.target.style.display="none";}}/>
+            <div>
+              <div style={{fontWeight:900,fontSize:14,color:T.gold,lineHeight:1.1}}>GOLD SUPERMARKET</div>
+              <div style={{fontSize:9,color:T.textSecondary}}>📍 Kitintale · Mile 8, Gayaza Rd</div>
+            </div>
+          </div>
+          <button onClick={()=>setScreen("cart")} style={{background:T.gold,border:"none",borderRadius:20,padding:"7px 14px",fontWeight:800,fontSize:12,cursor:"pointer",color:T.bg,display:"flex",alignItems:"center",gap:6,fontFamily:FONT}}>
+            🛒 {cartCount>0&&<span style={{background:T.red,color:"#fff",borderRadius:"50%",width:18,height:18,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>{cartCount}</span>}
           </button>
         </div>
-        <div style={{display:"flex",alignItems:"center",background:"#fff",borderRadius:25,padding:"0 12px",marginTop:10,border:`1.5px solid ${G.goldLight}`}}>
-          <span style={{color:G.muted}}>🔍</span>
-          <input style={{border:"none",outline:"none",flex:1,padding:"9px 8px",fontSize:12,background:"transparent",fontFamily:"inherit"}} placeholder="Search by name, SKU, category…" value={search} onChange={e=>setSearch(e.target.value)}/>
-          {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:G.muted,fontSize:16}}>✕</button>}
+        {/* Search */}
+        <div style={{display:"flex",alignItems:"center",background:T.bgInput,borderRadius:30,padding:"0 14px",border:`1.5px solid ${focused?T.gold:T.border}`,transition:"border-color .2s"}}>
+          <span style={{color:T.textSecondary}}>🔍</span>
+          <input style={{border:"none",outline:"none",flex:1,padding:"10px 8px",fontSize:13,background:"transparent",fontFamily:FONT,color:T.textPrimary}} placeholder="Search products, SKU…" value={search} onChange={e=>setSearch(e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}/>
+          {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:T.textSecondary,fontSize:16}}>✕</button>}
         </div>
       </div>
 
-      {/* Hero */}
-      {!search&&cat==="All"&&(
-        <div style={{background:`linear-gradient(135deg,${G.gold},${G.goldDark} 60%,${G.red})`,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      {/* Category chips */}
+      <div style={{display:"flex",gap:8,overflowX:"auto",padding:"12px 14px 4px",scrollbarWidth:"none"}}>
+        {[{id:"all",name:"All",icon:"🛒",color:T.gold,image:null},...categories].map(c=>(
+          <button key={c.id} onClick={()=>setCat(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:cat===c.id?`${T.gold}22`:"transparent",border:`1.5px solid ${cat===c.id?T.gold:T.border}`,borderRadius:12,padding:"8px 12px",cursor:"pointer",flexShrink:0,minWidth:60,transition:"all .15s"}}>
+            {c.image?<img src={c.image} style={{width:26,height:26,borderRadius:6,objectFit:"cover"}} alt=""/>:<span style={{fontSize:20}}>{c.icon}</span>}
+            <span style={{fontSize:10,fontWeight:700,color:cat===c.id?T.gold:T.textSecondary,whiteSpace:"nowrap"}}>{c.name==="All"?"All":c.name.split(" ")[0]}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search results */}
+      {search&&<div style={{padding:"8px 14px"}}>
+        <div style={{fontSize:12,color:T.textSecondary,marginBottom:10}}>{filtered.length} result{filtered.length!==1?"s":""} for "<b style={{color:T.textPrimary}}>{search}</b>"</div>
+        {filtered.length===0
+          ?<div style={{textAlign:"center",padding:40,color:T.textSecondary}}><div style={{fontSize:40}}>🔍</div><div style={{marginTop:8}}>No products found</div></div>
+          :<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{filtered.map(p=><ProdCard key={p.sku} p={p} cart={cart} add={add} rem={rem} onTap={setDetailProd} cats={categories}/>)}</div>}
+      </div>}
+
+      {!search&&<>
+        {/* Hero */}
+        {cat==="all"&&<div style={{margin:"12px 14px 0",background:`linear-gradient(135deg,${T.gold},${T.goldDark} 50%,${T.red})`,borderRadius:16,padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
-            <div style={{fontWeight:900,fontSize:15,color:G.dark}}>Fresh. Fast. Delivered. 🚀</div>
-            <div style={{fontSize:11,color:G.charcoal,opacity:0.8}}>Order now — arrive in 30 mins</div>
+            <div style={{fontWeight:900,fontSize:16,color:T.bg}}>Fresh. Fast. Delivered.</div>
+            <div style={{fontSize:11,color:"rgba(0,0,0,0.55)",marginTop:2}}>Order now — arrives in 30 mins 🚀</div>
+            <div style={{marginTop:8,background:"rgba(0,0,0,0.12)",borderRadius:8,padding:"4px 10px",display:"inline-block",fontSize:11,color:T.bg,fontWeight:700}}>📍 Kitintale · Mile 8</div>
           </div>
-          <span style={{fontSize:38}}>🛵</span>
-        </div>
-      )}
+          <span style={{fontSize:52}}>🛵</span>
+        </div>}
 
-      {/* Cat chips */}
-      {!search&&(
-        <div style={{display:"flex",gap:8,overflowX:"auto",padding:"10px 14px",scrollbarWidth:"none"}}>
-          {CATS_MAIN.map(c=>(
-            <button key={c} style={S.catChip(cat===c)} onClick={()=>setCat(c)}>
-              {c==="All"?"🛒":CAT_META[c]?.icon} {c==="All"?"All":c.split(" ")[0]}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* SEARCH RESULTS */}
-      {search&&(
-        <div style={{padding:"10px 14px"}}>
-          <div style={{fontWeight:700,fontSize:12,color:G.muted,marginBottom:10}}>{filteredSearch.length} result{filteredSearch.length!==1?"s":""} for "{search}"</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {filteredSearch.map(p=><ProductCard key={p.sku} p={p} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart}/>)}
-          </div>
-          {filteredSearch.length===0&&<div style={{textAlign:"center",padding:40,color:G.muted}}><div style={{fontSize:40}}>🔍</div><div style={{marginTop:8}}>No products found</div></div>}
-        </div>
-      )}
-
-      {/* SINGLE CAT */}
-      {!search&&cat!=="All"&&(
-        <div style={{padding:"10px 0"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 14px 12px"}}>
-            <span style={{fontSize:24}}>{CAT_META[cat]?.icon}</span>
-            <span style={{fontWeight:900,fontSize:16,color:G.dark}}>{cat}</span>
-            <span style={{fontSize:11,color:G.muted}}>({ALL_PRODUCTS.filter(p=>p.cat===cat).length} items)</span>
-          </div>
-          {CAT_META[cat]?.subcats.map(sub=>{
-            const items=ALL_PRODUCTS.filter(p=>p.cat===cat&&p.subcat===sub);
-            if(!items.length)return null;
-            return <SubcatSection key={sub} subcat={sub} items={items} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart}/>;
-          })}
-        </div>
-      )}
-
-      {/* ALL CATS HOME */}
-      {!search&&cat==="All"&&(
-        <>
-          {/* Flash Sale Banner */}
-          <div style={{background:`linear-gradient(135deg,${G.redDark},${G.red})`,margin:"0 14px 16px",borderRadius:14,overflow:"hidden"}}>
-            <div style={{padding:"12px 14px 8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{color:"#fff",fontWeight:900,fontSize:15}}>⚡ Flash Sales</span>
-              <div style={{display:"flex",gap:3}}>
-                {[h,m,s].map((t,i)=>(
-                  <React.Fragment key={i}>
-                    <span style={{background:"rgba(255,255,255,0.2)",color:"#fff",padding:"3px 7px",borderRadius:6,fontFamily:"monospace",fontWeight:900,fontSize:13}}>{t}</span>
-                    {i<2&&<span style={{color:"#fff",fontWeight:900,alignSelf:"center",fontSize:14}}>:</span>}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            <div style={{display:"flex",gap:10,overflowX:"auto",padding:"4px 14px 14px",scrollbarWidth:"none"}}>
-              {FLASH_ITEMS.map(p=>(
-                <div key={p.sku} style={{background:"#fff",borderRadius:12,minWidth:115,padding:"10px 10px 12px",flexShrink:0,cursor:"pointer",border:`1.5px solid ${cart[p.sku]?G.gold:"transparent"}`}} onClick={()=>addToCart(p.sku)}>
-                  <div style={{fontSize:26,textAlign:"center"}}>{p.emoji}</div>
-                  <div style={{fontSize:10,fontWeight:700,color:G.dark,marginTop:4,lineHeight:1.2}}>{p.name}</div>
-                  <div style={{fontSize:8,color:G.muted}}>{p.variant}</div>
-                  <div style={{color:G.red,fontWeight:900,fontSize:11,marginTop:3}}>{fmtUGX(p.price)}</div>
-                  <div style={{fontSize:9,background:G.green,color:"#fff",borderRadius:6,textAlign:"center",padding:"2px 0",marginTop:4,fontWeight:800}}>-{p.discount}%</div>
-                  {cart[p.sku]&&<div style={{marginTop:3,fontSize:8,background:G.gold,borderRadius:4,textAlign:"center",fontWeight:700}}>In cart: {cart[p.sku]}</div>}
-                </div>
+        {/* Flash sale */}
+        {cat==="all"&&flashItems.length>0&&<div style={{margin:"14px 14px 0"}}>
+          <div style={{background:`linear-gradient(90deg,${T.redDark},${T.red})`,borderRadius:"14px 14px 0 0",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{color:"#fff",fontWeight:900,fontSize:14}}>⚡ Flash Sales</span>
+            <div style={{display:"flex",gap:4,alignItems:"center"}}>
+              {[h,m,s].map((t,i)=>(
+                <React.Fragment key={i}>
+                  <span style={{background:"rgba(255,255,255,0.2)",color:"#fff",padding:"3px 7px",borderRadius:6,fontFamily:"monospace",fontWeight:900,fontSize:13}}>{t}</span>
+                  {i<2&&<span style={{color:"rgba(255,255,255,0.5)",fontWeight:900}}>:</span>}
+                </React.Fragment>
               ))}
             </div>
           </div>
+          <div style={{display:"flex",gap:10,overflowX:"auto",background:`${T.red}11`,borderRadius:"0 0 14px 14px",padding:"10px 14px 14px",scrollbarWidth:"none",border:`1px solid ${T.red}33`,borderTop:"none"}}>
+            {flashItems.map(p=>(
+              <div key={p.sku} onClick={()=>setDetailProd(p)} style={{background:T.bgCard,borderRadius:12,minWidth:115,overflow:"hidden",cursor:"pointer",border:`1.5px solid ${cart[p.sku]?T.gold:T.border}`,flexShrink:0}}>
+                <div style={{height:80,background:T.bgElevated,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+                  {p.image?<img src={p.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:36}}>{p.emoji}</span>}
+                </div>
+                <div style={{padding:"8px 8px 10px"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:T.textPrimary,lineHeight:1.2,marginBottom:1}}>{p.name}</div>
+                  <div style={{fontSize:8,color:T.textSecondary}}>{p.variant}</div>
+                  <div style={{color:T.gold,fontWeight:900,fontSize:12,marginTop:3}}>{ugx(p.price)}</div>
+                  <div onClick={e=>{e.stopPropagation();add(p.sku);}} style={{marginTop:5,background:cart[p.sku]?T.bgInput:T.gold,borderRadius:6,padding:"4px 0",textAlign:"center",fontSize:10,fontWeight:800,color:cart[p.sku]?T.gold:T.bg,cursor:"pointer"}}>
+                    {cart[p.sku]?`In cart: ${cart[p.sku]}`:"+ Add"}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>}
 
-          {/* Per-cat sections */}
-          {Object.keys(CAT_META).map(catName=>{
-            const items=ALL_PRODUCTS.filter(p=>p.cat===catName);
-            return <CatSection key={catName} catName={catName} items={items} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} onSeeAll={()=>setCat(catName)}/>;
-          })}
-        </>
-      )}
-
-      <div style={S.footer}>
-        <button style={S.footerBtn(true)}>🏠<span>Home</span></button>
-        <button style={S.footerBtn(false)} onClick={()=>setScreen("cart")}>🛒<span>Cart{cartCount>0?` (${cartCount})`:""}</span></button>
-        <button style={S.footerBtn(false)}>📦<span>Orders</span></button>
-        <button style={{...S.footerBtn(false),opacity:0.3}} onClick={handleLockTap}>🔒<span>Staff</span></button>
-      </div>
+        {/* Product sections */}
+        <div style={{padding:"14px 14px 0"}}>
+          {cat==="all"
+            ? categories.map(c=>{
+                const items=products.filter(p=>p.cat===c.id&&p.stock>0).slice(0,4);
+                if(!items.length)return null;
+                return <div key={c.id} style={{marginBottom:22}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      {c.image?<img src={c.image} style={{width:24,height:24,borderRadius:6,objectFit:"cover"}} alt=""/>:<span style={{fontSize:20}}>{c.icon}</span>}
+                      <span style={{fontWeight:800,fontSize:15,color:T.textPrimary}}>{c.name}</span>
+                    </div>
+                    <button onClick={()=>setCat(c.id)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 12px",fontSize:11,fontWeight:700,color:T.gold,cursor:"pointer",fontFamily:FONT}}>See All →</button>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    {items.map(p=><ProdCard key={p.sku} p={p} cart={cart} add={add} rem={rem} onTap={setDetailProd} cats={categories}/>)}
+                  </div>
+                </div>;
+              })
+            : <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {products.filter(p=>p.cat===cat).map(p=><ProdCard key={p.sku} p={p} cart={cart} add={add} rem={rem} onTap={setDetailProd} cats={categories}/>)}
+              </div>}
+        </div>
+      </>}
+      <Nav/>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════
-// ADMIN DASHBOARD
-// ══════════════════════════════════════════════════════════════════
-function AdminDashboard({onBack}) {
+/* ═══════════════════════════════════════════════════
+   ADMIN DASHBOARD
+═══════════════════════════════════════════════════ */
+function AdminDashboard({products,setProducts,categories,setCategories,riders,setRiders,onBack}) {
   const [tab,setTab]=useState("orders");
-  const [orders,setOrders]=useState(initOrders);
-  const [products,setProducts]=useState(ALL_PRODUCTS);
-  const [riders,setRiders]=useState(RIDERS);
-  const [notifNums,setNotifNums]=useState([
-    {id:1,num:"+256 774 000 001",role:"Branch Manager – Kitintale",active:true},
-    {id:2,num:"+256 755 000 002",role:"Branch Manager – Mile 8, Gayaza Rd",active:true},
-    {id:3,num:"+256 700 000 003",role:"Delivery Supervisor",active:false},
-  ]);
+  const [orders,setOrders]=useState(INIT_ORDERS);
   const [filterStatus,setFilterStatus]=useState("all");
   const [showAssign,setShowAssign]=useState(null);
-  const [catFilter,setCatFilter]=useState("All");
-  const [addProd,setAddProd]=useState(false);
-  const [newProd,setNewProd]=useState({name:"",cat:"Food & Groceries",price:"",origPrice:"",stock:"",unit:"pack",emoji:"📦",variant:"",discount:0});
+  const [catFilter,setCatFilter]=useState("all");
+  const [editProd,setEditProd]=useState(null);
+  const [showProdModal,setShowProdModal]=useState(false);
+  const [np,setNp]=useState({name:"",variant:"",cat:"FG",price:"",origPrice:"",stock:"",unit:"pack",emoji:"📦",image:null,express:false,discount:0,badge:""});
+  const [showCatModal,setShowCatModal]=useState(false);
+  const [editCat,setEditCat]=useState(null);
+  const [nc,setNc]=useState({id:"",name:"",icon:"🛒",color:T.gold,image:null});
+  const [editRider,setEditRider]=useState(null);
+  const [showRiderModal,setShowRiderModal]=useState(false);
+  const [rf,setRf]=useState({name:"",phone:"",bike:"",branch:"Kitintale",status:"available",photo:null});
+  const [notifs,setNotifs]=useState(NOTIF_NUMBERS);
 
-  const filteredOrders=filterStatus==="all"?orders:orders.filter(o=>o.status===filterStatus);
-  const filteredProds=catFilter==="All"?products:products.filter(p=>p.cat===catFilter);
-  const verifyPayment=id=>setOrders(os=>os.map(o=>o.id===id?{...o,status:"verified"}:o));
-  const assignRider=(orderId,riderId)=>{setOrders(os=>os.map(o=>o.id===orderId?{...o,status:"on_the_way",rider:riderId}:o));setRiders(rs=>rs.map(r=>r.id===riderId?{...r,status:"busy"}:r));setShowAssign(null);alert("✅ Rider assigned! WhatsApp sent to rider and customer.");};
-  const markDelivered=id=>{const o=orders.find(x=>x.id===id);setOrders(os=>os.map(x=>x.id===id?{...x,status:"delivered"}:x));if(o?.rider)setRiders(rs=>rs.map(r=>r.id===o.rider?{...r,status:"available",deliveries:r.deliveries+1}:r));};
+  const filtOrders=filterStatus==="all"?orders:orders.filter(o=>o.status===filterStatus);
+  const filtProds=catFilter==="all"?products:products.filter(p=>p.cat===catFilter);
 
-  const todayOrders=orders.length,pending=orders.filter(o=>o.status==="pending").length,active=orders.filter(o=>o.status==="on_the_way").length;
-  const revenue=orders.filter(o=>o.status!=="pending").reduce((s,o)=>s+o.total,0);
-  const lowStock=products.filter(p=>p.stock>0&&p.stock<=5).length,outStock=products.filter(p=>p.stock===0).length;
+  const verifyPay=id=>setOrders(os=>os.map(o=>o.id===id?{...o,status:"verified"}:o));
+  const assignRider=(oid,rid)=>{setOrders(os=>os.map(o=>o.id===oid?{...o,status:"on_the_way",rider:rid}:o));setRiders(rs=>rs.map(r=>r.id===rid?{...r,status:"busy"}:r));setShowAssign(null);alert("✅ Rider assigned! WhatsApp alert sent.");};
+  const markDone=id=>{const o=orders.find(x=>x.id===id);setOrders(os=>os.map(x=>x.id===id?{...x,status:"delivered"}:x));if(o?.rider)setRiders(rs=>rs.map(r=>r.id===o.rider?{...r,status:"available",deliveries:r.deliveries+1}:r));};
 
-  const A={
-    wrap:{fontFamily:"'Sora','Nunito',sans-serif",background:"#0F0700",minHeight:"100vh",color:"#FFF"},
-    hdr:{background:`linear-gradient(135deg,${G.red},#6B0010)`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"},
-    tabs:{display:"flex",gap:0,background:"#1A0A00",borderBottom:`2px solid ${G.gold}22`,overflowX:"auto"},
-    tab:a=>({padding:"12px 16px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:"none",color:a?G.gold:"#666",borderBottom:a?`3px solid ${G.gold}`:"3px solid transparent",whiteSpace:"nowrap"}),
-    card:{background:"#1A0A00",borderRadius:14,padding:14,border:`1px solid ${G.gold}22`,marginBottom:12},
-    sc:c=>({background:`linear-gradient(135deg,${c}22,${c}11)`,borderRadius:14,padding:14,border:`1px solid ${c}44`,flex:1,minWidth:75}),
-    btn:c=>({background:c,border:"none",borderRadius:8,padding:"6px 10px",color:c===G.gold?G.dark:"#fff",fontWeight:800,fontSize:11,cursor:"pointer"}),
-    input:{background:"#2D1A00",border:`1px solid ${G.gold}44`,borderRadius:8,padding:"7px 10px",color:"#fff",fontSize:12,outline:"none",fontFamily:"inherit",width:"100%",boxSizing:"border-box"},
-    lbl:{fontSize:10,fontWeight:700,color:"#888",marginBottom:3,display:"block"},
+  const openEditProd=p=>{setEditProd(p);setNp({...p,price:String(p.price),origPrice:String(p.origPrice||""),stock:String(p.stock),discount:String(p.discount||0),badge:p.badge||""});setShowProdModal(true);};
+  const openAddProd=()=>{setEditProd(null);setNp({name:"",variant:"",cat:"FG",price:"",origPrice:"",stock:"",unit:"pack",emoji:"📦",image:null,express:false,discount:0,badge:""});setShowProdModal(true);};
+  const saveProd=()=>{
+    if(!np.name||!np.price)return alert("Name and price required");
+    if(editProd){setProducts(ps=>ps.map(p=>p.sku===editProd.sku?{...np,sku:editProd.sku,price:+np.price,origPrice:+np.origPrice||+np.price,stock:+np.stock,discount:+np.discount}:p));}
+    else{const sku=mkSKU(`${np.cat}99`,np.name.replace(/\s+/g,"").toUpperCase().slice(0,4));setProducts(ps=>[...ps,{...np,sku,price:+np.price,origPrice:+np.origPrice||+np.price,stock:+np.stock,discount:+np.discount}]);}
+    setShowProdModal(false);
   };
 
+  const openEditCat=c=>{setEditCat(c);setNc({...c});setShowCatModal(true);};
+  const openAddCat=()=>{setEditCat(null);setNc({id:"",name:"",icon:"🛒",color:T.gold,image:null});setShowCatModal(true);};
+  const saveCat=()=>{if(!nc.name||!nc.id)return alert("ID and name required");if(editCat)setCategories(cs=>cs.map(c=>c.id===editCat.id?{...nc}:c));else setCategories(cs=>[...cs,{...nc}]);setShowCatModal(false);};
+
+  const openEditRider=r=>{setEditRider(r);setRf({...r});setShowRiderModal(true);};
+  const openAddRider=()=>{setEditRider(null);setRf({name:"",phone:"",bike:"",branch:"Kitintale",status:"available",photo:null});setShowRiderModal(true);};
+  const saveRider=()=>{if(!rf.name||!rf.phone)return alert("Name and phone required");if(editRider)setRiders(rs=>rs.map(r=>r.id===editRider.id?{...r,...rf}:r));else setRiders(rs=>[...rs,{...rf,id:`R${Date.now()}`,rating:5.0,deliveries:0}]);setShowRiderModal(false);};
+
+  const st={orders:orders.length,pending:orders.filter(o=>o.status==="pending").length,active:orders.filter(o=>o.status==="on_the_way").length,revenue:orders.filter(o=>["verified","on_the_way","delivered"].includes(o.status)).reduce((s,o)=>s+o.total,0),lowStock:products.filter(p=>p.stock>0&&p.stock<=5).length,outStock:products.filter(p=>p.stock===0).length};
+
+  const S={wrap:{fontFamily:FONT,background:T.bg,minHeight:"100vh",color:T.textPrimary},hdr:{background:`linear-gradient(135deg,${T.red},${T.redDark})`,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"},tabs:{display:"flex",background:T.bgCard,borderBottom:`2px solid ${T.border}`,overflowX:"auto",scrollbarWidth:"none"},tab:a=>({padding:"12px 14px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:"none",color:a?T.gold:T.textSecondary,borderBottom:a?`3px solid ${T.gold}`:"3px solid transparent",whiteSpace:"nowrap",fontFamily:FONT}),card:{background:T.bgCard,borderRadius:14,padding:14,border:`1px solid ${T.border}`,marginBottom:12}};
+
+  const sel={width:"100%",background:T.bgInput,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",color:T.textPrimary,fontSize:13,fontFamily:FONT,outline:"none"};
+
   return (
-    <div style={A.wrap}>
-      <div style={A.hdr}>
+    <div style={S.wrap}>
+      <div style={S.hdr}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <img src={LOGO_URL} alt="Gold Supermarket" style={{height:38,width:"auto",objectFit:"contain",filter:"brightness(1.2) drop-shadow(0 1px 4px rgba(0,0,0,0.4))"}} onError={e=>{e.target.style.display="none";}} />
-          <div><div style={{fontWeight:900,fontSize:15,color:G.gold}}>GOLD SUPERMARKET — Admin</div><div style={{fontSize:10,color:"#FFD84D88"}}>{new Date().toLocaleDateString("en-UG",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div></div>
+          <img src="/logo.png" alt="" style={{height:36,objectFit:"contain"}} onError={e=>{e.target.style.display="none";}}/>
+          <div><div style={{fontWeight:900,fontSize:14,color:T.gold}}>GOLD SUPERMARKET</div><div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>Admin Dashboard</div></div>
         </div>
-        <button onClick={onBack} style={{background:G.gold,border:"none",borderRadius:8,padding:"7px 12px",fontWeight:800,fontSize:11,cursor:"pointer"}}>← Customer View</button>
+        <Btn small onClick={onBack}>← Customer</Btn>
       </div>
-      <div style={A.tabs}>
-        {[["orders","📦 Orders"],["inventory","🛍️ Inventory"],["riders","🏍️ Riders"],["notifications","🔔 Alerts"]].map(([k,l])=>(
-          <button key={k} style={A.tab(tab===k)} onClick={()=>setTab(k)}>{l}</button>
+
+      <div style={S.tabs}>
+        {[["orders","📦 Orders"],["inventory","🛍️ Inventory"],["categories","🏷️ Categories"],["riders","🏍️ Riders"],["alerts","🔔 Alerts"]].map(([k,l])=>(
+          <button key={k} style={S.tab(tab===k)} onClick={()=>setTab(k)}>{l}</button>
         ))}
       </div>
+
       <div style={{padding:14}}>
+        {/* Stats */}
         <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-          {[["📦","Orders",todayOrders,G.gold],["⏳","Pending",pending,"#FF8C00"],["🏍️","Active",active,G.green],["💰","Revenue",revenue>0?`${(revenue/1000).toFixed(0)}K`:"0",G.green],["⚠️","Low Stock",lowStock,"#FF8C00"],["❌","Out Stock",outStock,G.red]].map(([icon,label,val,color])=>(
-            <div key={label} style={A.sc(color)}><div style={{fontSize:16}}>{icon}</div><div style={{fontWeight:900,fontSize:18,color,marginTop:2}}>{val}</div><div style={{fontSize:9,color:"#777",marginTop:1}}>{label}</div></div>
+          {[[T.gold,"📦","Orders",st.orders],["#FF8C00","⏳","Pending",st.pending],[T.green,"🏍️","Active",st.active],[T.green,"💰","Revenue",st.revenue>0?`${(st.revenue/1000).toFixed(0)}K`:"0"],["#FF8C00","⚠️","Low Stock",st.lowStock],[T.red,"❌","Out",st.outStock]].map(([c,ico,l,v])=>(
+            <div key={l} style={{background:`${c}18`,borderRadius:14,padding:"12px 8px",border:`1px solid ${c}33`,flex:1,minWidth:75,textAlign:"center"}}>
+              <div style={{fontSize:16}}>{ico}</div>
+              <div style={{fontWeight:900,fontSize:17,color:c,marginTop:2}}>{v}</div>
+              <div style={{fontSize:9,color:T.textSecondary,marginTop:1}}>{l}</div>
+            </div>
           ))}
         </div>
 
         {/* ORDERS */}
-        {tab==="orders"&&(
-          <div>
-            <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-              {[["all","All"],["pending","Pending"],["verified","Verified"],["on_the_way","On Way"],["delivered","Delivered"]].map(([k,l])=>(
-                <button key={k} onClick={()=>setFilterStatus(k)} style={{...A.btn(filterStatus===k?G.gold:"#2D1A00"),border:filterStatus===k?"none":`1px solid ${G.gold}33`}}>{l}</button>
-              ))}
-            </div>
-            {filteredOrders.map(order=>(
-              <div key={order.id} style={A.card}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
-                  <div>
-                    <div style={{fontWeight:900,fontSize:14,color:G.gold}}>{order.id}</div>
-                    <div style={{fontSize:11,color:"#CCC",marginTop:2}}>👤 {order.customer} · 📞 {order.phone}</div>
-                    <div style={{fontSize:10,color:"#888",marginTop:2}}>📍 {order.location} · {order.dist}km · {order.branch} · 🕐 {order.ts}</div>
-                    <div style={{marginTop:5,fontSize:11,color:"#AAA"}}>{order.items.map(i=>`${i.name}×${i.qty}`).join(", ")}</div>
-                    <div style={{marginTop:3,fontSize:11}}>Tx: <span style={{fontFamily:"monospace",color:G.goldLight}}>{order.txId}</span> · <b style={{color:G.gold}}>{fmtUGX(order.total)}</b></div>
-                  </div>
-                  <StatusBadge status={order.status}/>
-                </div>
-                <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
-                  {order.status==="pending"&&<button onClick={()=>verifyPayment(order.id)} style={A.btn(G.green)}>✅ Verify Payment</button>}
-                  {order.status==="verified"&&<button onClick={()=>setShowAssign(order.id)} style={A.btn(G.gold)}>🏍️ Assign Rider</button>}
-                  {order.status==="on_the_way"&&(<><span style={{fontSize:10,color:"#888",alignSelf:"center"}}>Rider: {riders.find(r=>r.id===order.rider)?.name}</span><button onClick={()=>markDelivered(order.id)} style={A.btn("#4CAF50")}>✅ Mark Delivered</button></>)}
-                </div>
-                {showAssign===order.id&&(
-                  <div style={{marginTop:10,background:"#2D1A00",borderRadius:10,padding:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:G.gold,marginBottom:8}}>Select Rider:</div>
-                    {riders.map(r=>(
-                      <div key={r.id} onClick={()=>r.status==="available"&&assignRider(order.id,r.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 10px",borderRadius:8,marginBottom:5,background:r.status==="available"?"#3D2A00":"#1F1200",cursor:r.status==="available"?"pointer":"not-allowed",border:`1px solid ${r.status==="available"?G.gold+"44":"#333"}`}}>
-                        <div><div style={{fontWeight:700,fontSize:12}}>{r.name}</div><div style={{fontSize:10,color:"#888"}}>{r.phone} · {r.deliveries} today</div></div>
-                        <span style={{fontSize:10,fontWeight:700,color:r.status==="available"?G.green:"#888"}}>{r.status==="available"?"✅ Available":"🔴 Busy"}</span>
-                      </div>
-                    ))}
-                    <button onClick={()=>setShowAssign(null)} style={{...A.btn("#555"),marginTop:6}}>Cancel</button>
-                  </div>
-                )}
-              </div>
+        {tab==="orders"&&<div>
+          <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+            {[["all","All"],["pending","Pending"],["verified","Verified"],["on_the_way","On Way"],["delivered","Delivered"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setFilterStatus(k)} style={{background:filterStatus===k?T.gold:T.bgElevated,color:filterStatus===k?T.bg:T.textSecondary,border:`1px solid ${filterStatus===k?T.gold:T.border}`,borderRadius:20,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>{l}</button>
             ))}
           </div>
-        )}
+          {filtOrders.map(order=>(
+            <div key={order.id} style={S.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontWeight:900,fontSize:14,color:T.gold}}>{order.id}</div>
+                  <div style={{fontSize:11,color:T.textSecondary,marginTop:2}}>👤 {order.customer} · 📞 {order.phone}</div>
+                  <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>📍 {order.location} · {order.dist}km · {order.branch} · 🕐 {order.ts}</div>
+                  <div style={{marginTop:4,fontSize:11,color:T.textSecondary}}>{order.items.map(i=>`${i.name}×${i.qty}`).join(", ")}</div>
+                  <div style={{marginTop:3,fontSize:11}}>Tx: <span style={{fontFamily:"monospace",color:T.goldLight}}>{order.txId}</span> · <b style={{color:T.gold}}>{ugx(order.total)}</b></div>
+                </div>
+                <StatusPill status={order.status}/>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                {order.status==="pending"&&<Btn small onClick={()=>verifyPay(order.id)}>✅ Verify Payment</Btn>}
+                {order.status==="verified"&&<Btn small onClick={()=>setShowAssign(order.id)}>🏍️ Assign Rider</Btn>}
+                {order.status==="on_the_way"&&<><span style={{fontSize:11,color:T.textSecondary,alignSelf:"center"}}>Rider: {riders.find(r=>r.id===order.rider)?.name}</span><Btn small onClick={()=>markDone(order.id)}>✅ Delivered</Btn></>}
+              </div>
+              {showAssign===order.id&&<div style={{marginTop:10,background:T.bgElevated,borderRadius:12,padding:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.gold,marginBottom:8}}>Select Rider:</div>
+                {riders.map(r=>(
+                  <div key={r.id} onClick={()=>r.status==="available"&&assignRider(order.id,r.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:10,marginBottom:6,background:T.bgCard,cursor:r.status==="available"?"pointer":"not-allowed",border:`1px solid ${r.status==="available"?T.gold+"33":T.border}`,opacity:r.status==="available"?1:0.5}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:T.bgInput,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {r.photo?<img src={r.photo} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:<span style={{fontSize:18}}>🏍️</span>}
+                    </div>
+                    <div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:T.textPrimary}}>{r.name}</div><div style={{fontSize:10,color:T.textSecondary}}>{r.bike} · {r.deliveries} today · ⭐{r.rating}</div></div>
+                    <StatusPill status={r.status}/>
+                  </div>
+                ))}
+                <button onClick={()=>setShowAssign(null)} style={{background:"none",border:"none",color:T.textSecondary,fontSize:11,cursor:"pointer",fontFamily:FONT,marginTop:4}}>Cancel</button>
+              </div>}
+            </div>
+          ))}
+        </div>}
 
         {/* INVENTORY */}
-        {tab==="inventory"&&(
-          <div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
-              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                {["All",...Object.keys(CAT_META)].map(c=>(
-                  <button key={c} onClick={()=>setCatFilter(c)} style={{...A.btn(catFilter===c?G.gold:"#2D1A00"),border:catFilter===c?"none":`1px solid ${G.gold}33`}}>{c==="All"?"All":CAT_META[c].icon+" "+c.split(" ")[0]}</button>
-                ))}
-              </div>
-              <button onClick={()=>setAddProd(true)} style={A.btn(G.green)}>+ Add Product</button>
-            </div>
-            {addProd&&(
-              <div style={{...A.card,border:`1px solid ${G.gold}88`,marginBottom:14}}>
-                <div style={{fontWeight:800,color:G.gold,marginBottom:10}}>New Product</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  {[["name","Name"],["variant","Variant"],["price","Price (UGX)"],["origPrice","Orig. Price"],["stock","Stock"],["unit","Unit"],["emoji","Emoji"],["discount","Discount %"]].map(([k,l])=>(
-                    <div key={k}><label style={A.lbl}>{l}</label><input style={A.input} value={newProd[k]} onChange={e=>setNewProd(p=>({...p,[k]:e.target.value}))}/></div>
-                  ))}
-                </div>
-                <div style={{marginTop:8}}><label style={A.lbl}>Category</label>
-                  <select style={{...A.input,height:34}} value={newProd.cat} onChange={e=>setNewProd(p=>({...p,cat:e.target.value}))}>
-                    {Object.keys(CAT_META).map(c=><option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div style={{display:"flex",gap:8,marginTop:10}}>
-                  <button onClick={()=>{
-                    if(!newProd.name||!newProd.price)return;
-                    const meta=CAT_META[newProd.cat];
-                    const sku=mkSKU(`${meta.code}99`,newProd.name.replace(/\s+/g,"").toUpperCase().slice(0,4));
-                    setProducts(ps=>[...ps,{...newProd,sku,id:Date.now(),price:+newProd.price,origPrice:+newProd.origPrice||+newProd.price,stock:+newProd.stock,discount:+newProd.discount,express:false,badge:null,subcat:meta.subcats[0]}]);
-                    setAddProd(false);setNewProd({name:"",cat:"Food & Groceries",price:"",origPrice:"",stock:"",unit:"pack",emoji:"📦",variant:"",discount:0});
-                  }} style={A.btn(G.green)}>✅ Save</button>
-                  <button onClick={()=>setAddProd(false)} style={A.btn("#555")}>Cancel</button>
-                </div>
-              </div>
-            )}
-            {(lowStock>0||outStock>0)&&(
-              <div style={{background:"#3D1200",borderRadius:10,padding:10,marginBottom:12,border:"1px solid #C0001E44"}}>
-                <div style={{fontWeight:800,color:G.red,fontSize:12,marginBottom:6}}>⚠️ Stock Alerts</div>
-                {products.filter(p=>p.stock===0).map(p=><div key={p.sku} style={{fontSize:10,color:"#FF8888",marginBottom:2}}>❌ {p.name} ({p.variant}) — OUT OF STOCK</div>)}
-                {products.filter(p=>p.stock>0&&p.stock<=5).map(p=><div key={p.sku} style={{fontSize:10,color:"#FFAA44",marginBottom:2}}>⚠️ {p.name} — Only {p.stock} left</div>)}
-              </div>
-            )}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:10}}>
-              {filteredProds.map(p=>(
-                <div key={p.sku} style={{...A.card,opacity:p.stock===0?0.55:1,marginBottom:0}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                    <span style={{fontSize:24}}>{p.emoji}</span>
-                    {p.stock===0&&<span style={{fontSize:8,background:"#FF444422",color:"#FF6666",padding:"2px 5px",borderRadius:6,fontWeight:700}}>OUT</span>}
-                    {p.stock>0&&p.stock<=5&&<span style={{fontSize:8,background:"#FF880022",color:"#FFAA44",padding:"2px 5px",borderRadius:6,fontWeight:700}}>LOW:{p.stock}</span>}
-                  </div>
-                  <div style={{fontSize:8,color:"#666",fontFamily:"monospace",marginTop:3}}>{p.sku}</div>
-                  <div style={{fontWeight:700,fontSize:11,marginTop:2,lineHeight:1.3}}>{p.name}</div>
-                  <div style={{fontSize:9,color:"#888"}}>{p.variant}</div>
-                  <div style={{color:G.goldLight,fontWeight:800,fontSize:12,marginTop:3}}>{fmtUGX(p.price)}</div>
-                  {p.discount>0&&<div style={{fontSize:9,color:G.green}}>-{p.discount}% off · Stock: {p.stock}</div>}
-                  <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
-                    <button onClick={()=>{const s=prompt(`New stock for ${p.name}:`,p.stock);if(s!==null)setProducts(ps=>ps.map(x=>x.sku===p.sku?{...x,stock:+s}:x));}} style={A.btn(G.gold)}>Edit</button>
-                    <button onClick={()=>setProducts(ps=>ps.filter(x=>x.sku!==p.sku))} style={A.btn("#8B0015")}>Del</button>
-                  </div>
-                </div>
+        {tab==="inventory"&&<div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {[{id:"all",name:"All"},...categories].map(c=>(
+                <button key={c.id} onClick={()=>setCatFilter(c.id)} style={{background:catFilter===c.id?T.gold:T.bgElevated,color:catFilter===c.id?T.bg:T.textSecondary,border:`1px solid ${catFilter===c.id?T.gold:T.border}`,borderRadius:20,padding:"5px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>
+                  {c.id==="all"?"All":(c.icon+" "+c.name.split(" ")[0])}
+                </button>
               ))}
             </div>
+            <Btn small onClick={openAddProd}>+ Add Product</Btn>
           </div>
-        )}
+          {(st.lowStock>0||st.outStock>0)&&<div style={{background:"#2D000A",borderRadius:10,padding:10,marginBottom:12,border:`1px solid ${T.red}33`}}>
+            <div style={{fontWeight:800,color:T.red,fontSize:12,marginBottom:6}}>⚠️ Stock Alerts</div>
+            {products.filter(p=>p.stock===0).map(p=><div key={p.sku} style={{fontSize:10,color:"#FF8888",marginBottom:2}}>❌ {p.name} — OUT OF STOCK</div>)}
+            {products.filter(p=>p.stock>0&&p.stock<=5).map(p=><div key={p.sku} style={{fontSize:10,color:"#FFAA44",marginBottom:2}}>⚠️ {p.name} — Only {p.stock} left</div>)}
+          </div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:10}}>
+            {filtProds.map(p=>(
+              <div key={p.sku} style={{background:T.bgCard,borderRadius:12,overflow:"hidden",border:`1px solid ${T.border}`,opacity:p.stock===0?0.6:1}}>
+                <div style={{height:90,background:T.bgElevated,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+                  {p.image?<img src={p.image} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:<span style={{fontSize:38}}>{p.emoji}</span>}
+                  {p.stock===0&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#fff",fontSize:9,fontWeight:700}}>OUT</span></div>}
+                  {p.stock>0&&p.stock<=5&&<div style={{position:"absolute",bottom:4,left:4,background:"#FF8C00",color:"#fff",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:6}}>LOW:{p.stock}</div>}
+                </div>
+                <div style={{padding:"8px 10px"}}>
+                  <div style={{fontSize:8,color:T.textMuted,fontFamily:"monospace"}}>{p.sku}</div>
+                  <div style={{fontWeight:700,fontSize:11,marginTop:2,color:T.textPrimary,lineHeight:1.3}}>{p.name}</div>
+                  <div style={{fontSize:9,color:T.textSecondary}}>{p.variant}</div>
+                  <div style={{color:T.gold,fontWeight:900,fontSize:12,marginTop:3}}>{ugx(p.price)}</div>
+                  <div style={{display:"flex",gap:5,marginTop:8}}>
+                    <Btn small onClick={()=>openEditProd(p)}>✏️ Edit</Btn>
+                    <Btn small danger onClick={()=>setProducts(ps=>ps.filter(x=>x.sku!==p.sku))}>Del</Btn>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>}
+
+        {/* CATEGORIES */}
+        {tab==="categories"&&<div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <span style={{fontWeight:800,fontSize:15,color:T.textPrimary}}>Product Categories</span>
+            <Btn small onClick={openAddCat}>+ New Category</Btn>
+          </div>
+          {categories.map(c=>(
+            <div key={c.id} style={{...S.card,display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:56,height:56,borderRadius:12,background:T.bgElevated,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {c.image?<img src={c.image} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:<span style={{fontSize:28}}>{c.icon}</span>}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,fontSize:14,color:T.textPrimary}}>{c.name}</div>
+                <div style={{fontSize:10,color:T.textSecondary,marginTop:2}}>Code: <span style={{fontFamily:"monospace",color:T.gold}}>{c.id}</span> · {products.filter(p=>p.cat===c.id).length} products</div>
+                <div style={{width:24,height:4,borderRadius:2,background:c.color,marginTop:5}}/>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <Btn small onClick={()=>openEditCat(c)}>✏️</Btn>
+                <Btn small danger onClick={()=>setCategories(cs=>cs.filter(x=>x.id!==c.id))}>✕</Btn>
+              </div>
+            </div>
+          ))}
+        </div>}
 
         {/* RIDERS */}
-        {tab==="riders"&&(
-          <div>
-            <div style={{fontWeight:800,color:G.gold,marginBottom:12}}>Rider Management</div>
-            {riders.map(r=>(
-              <div key={r.id} style={{...A.card,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                <div><div style={{fontWeight:800,fontSize:14}}>🏍️ {r.name}</div><div style={{fontSize:11,color:"#888",marginTop:2}}>📞 {r.phone}</div><div style={{fontSize:10,color:"#666",marginTop:2}}>Deliveries today: <b style={{color:G.gold}}>{r.deliveries}</b></div></div>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,background:r.status==="available"?"#1B8C4E22":"#FF000022",color:r.status==="available"?G.green:"#FF6666"}}>{r.status==="available"?"✅ Available":"🔴 Busy"}</span>
-                  <button onClick={()=>setRiders(rs=>rs.filter(x=>x.id!==r.id))} style={A.btn("#8B0015")}>Remove</button>
-                </div>
-              </div>
-            ))}
-            <button onClick={()=>{const name=prompt("Rider name:");const phone=prompt("Phone:");if(name&&phone)setRiders(rs=>[...rs,{id:`R${Date.now()}`,name,phone,status:"available",deliveries:0}]);}} style={{...A.btn(G.gold),padding:"9px 16px",fontSize:12}}>+ Add Rider</button>
+        {tab==="riders"&&<div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <span style={{fontWeight:800,fontSize:15,color:T.textPrimary}}>Rider Management</span>
+            <Btn small onClick={openAddRider}>+ Add Rider</Btn>
           </div>
-        )}
-
-        {/* NOTIFICATIONS */}
-        {tab==="notifications"&&(
-          <div>
-            <div style={{...A.card,border:`1px solid ${G.gold}66`,marginBottom:14}}>
-              <div style={{fontWeight:800,fontSize:13,color:G.gold,marginBottom:4}}>🔒 Verified Admin Numbers Only</div>
-              <div style={{fontSize:11,color:"#888"}}>Only numbers on this list receive WhatsApp alerts. Unverified numbers are blocked automatically.</div>
-            </div>
-            {notifNums.map(n=>(
-              <div key={n.id} style={{...A.card,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-                <div><div style={{fontWeight:700,fontFamily:"monospace",fontSize:13}}>{n.num}</div><div style={{fontSize:10,color:"#888",marginTop:2}}>{n.role}</div></div>
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  <div onClick={()=>setNotifNums(ns=>ns.map(x=>x.id===n.id?{...x,active:!x.active}:x))} style={{width:38,height:20,borderRadius:10,background:n.active?G.green:"#333",cursor:"pointer",position:"relative"}}>
-                    <div style={{position:"absolute",top:2,left:n.active?19:2,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"all .2s"}}/>
+          {riders.map(r=>(
+            <div key={r.id} style={{...S.card,display:"flex",gap:12,alignItems:"flex-start"}}>
+              <div style={{width:54,height:54,borderRadius:"50%",background:T.bgElevated,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {r.photo?<img src={r.photo} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:<span style={{fontSize:26}}>🏍️</span>}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:6}}>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:14,color:T.textPrimary}}>{r.name}</div>
+                    <div style={{fontSize:11,color:T.textSecondary,marginTop:2}}>📞 {r.phone}</div>
+                    <div style={{fontSize:11,color:T.textSecondary}}>🏍️ <span style={{fontFamily:"monospace",color:T.goldLight,fontWeight:700}}>{r.bike||"—"}</span></div>
+                    <div style={{fontSize:11,color:T.textSecondary}}>📍 {r.branch} · ⭐{r.rating} · {r.deliveries} deliveries today</div>
                   </div>
-                  <button onClick={()=>setNotifNums(ns=>ns.filter(x=>x.id!==n.id))} style={A.btn("#8B0015")}>✕</button>
+                  <StatusPill status={r.status}/>
+                </div>
+                <div style={{display:"flex",gap:6,marginTop:10}}>
+                  <Btn small onClick={()=>openEditRider(r)}>✏️ Edit</Btn>
+                  <Btn small danger onClick={()=>setRiders(rs=>rs.filter(x=>x.id!==r.id))}>Remove</Btn>
                 </div>
               </div>
-            ))}
-            <button onClick={()=>{const num=prompt("Phone (+256...)");const role=prompt("Role:");if(num&&role)setNotifNums(ns=>[...ns,{id:Date.now(),num,role,active:true}]);}} style={{...A.btn(G.gold),padding:"9px 16px",fontSize:12}}>+ Add Number</button>
-            <div style={{marginTop:18,...A.card}}>
-              <div style={{fontWeight:800,fontSize:12,color:G.gold,marginBottom:10}}>📱 Smart Alert Routing</div>
-              {[["🛒 New order","Nearby branch manager + Supervisor"],["💳 Payment verified","All active admin numbers"],["🏍️ Rider assigned","Rider (personal) + Customer WhatsApp"],["✅ Delivered","Customer + Supervisor"],["⚠️ Low stock","Branch manager only"]].map(([ev,tg])=>(
-                <div key={ev} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #2D1A00",fontSize:11}}>
-                  <span style={{color:"#CCC"}}>{ev}</span><span style={{color:"#888",maxWidth:"55%",textAlign:"right"}}>{tg}</span>
-                </div>
-              ))}
             </div>
+          ))}
+        </div>}
+
+        {/* ALERTS */}
+        {tab==="alerts"&&<div>
+          <div style={{background:"#1A1A00",border:`1px solid ${T.gold}44`,borderRadius:12,padding:12,marginBottom:14}}>
+            <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:4}}>🔒 Verified Numbers Only</div>
+            <div style={{fontSize:11,color:T.textSecondary}}>Only numbers verified here receive WhatsApp alerts. All others are blocked.</div>
           </div>
-        )}
+          {notifs.map(n=>(
+            <div key={n.id} style={{...S.card,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+              <div>
+                <div style={{fontWeight:700,fontFamily:"monospace",fontSize:13,color:T.textPrimary}}>{n.num}</div>
+                <div style={{fontSize:10,color:T.textSecondary,marginTop:2}}>{n.role} · {n.branch}</div>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <Toggle on={n.active} onChange={v=>setNotifs(ns=>ns.map(x=>x.id===n.id?{...x,active:v}:x))}/>
+                <Btn small danger onClick={()=>setNotifs(ns=>ns.filter(x=>x.id!==n.id))}>✕</Btn>
+              </div>
+            </div>
+          ))}
+          <Btn onClick={()=>{const num=prompt("+256 7XX XXX XXX");const role=prompt("Role:");const branch=prompt("Branch:");if(num&&role)setNotifs(ns=>[...ns,{id:Date.now(),num,role,branch:branch||"All",active:true}]);}}>+ Add Number</Btn>
+          <div style={{...S.card,marginTop:14}}>
+            <div style={{fontWeight:800,fontSize:12,color:T.gold,marginBottom:10}}>📱 Smart Alert Routing</div>
+            {[["🛒 New order","Nearest branch manager"],["💳 Payment verified","All active admins"],["🏍️ Rider assigned","Rider + Customer"],["✅ Delivered","Customer + Supervisor"],["⚠️ Low stock","Branch manager only"]].map(([ev,tg])=>(
+              <div key={ev} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.border}`,fontSize:11}}>
+                <span style={{color:T.textSecondary}}>{ev}</span><span style={{color:T.textMuted,maxWidth:"55%",textAlign:"right"}}>{tg}</span>
+              </div>
+            ))}
+          </div>
+        </div>}
       </div>
+
+      {/* ── Product Sheet */}
+      <Sheet open={showProdModal} onClose={()=>setShowProdModal(false)} title={editProd?"Edit Product":"New Product"}>
+        <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:14}}>
+          <ImgUpload current={np.image} onUpload={img=>setNp(p=>({...p,image:img}))} label="Product Image" size={72}/>
+          <div style={{flex:1}}>
+            <Fld label="Product Name" value={np.name} onChange={v=>setNp(p=>({...p,name:v}))} placeholder="e.g. Kakira Sugar"/>
+            <Fld label="Variant / Size" value={np.variant} onChange={v=>setNp(p=>({...p,variant:v}))} placeholder="e.g. 10KG"/>
+          </div>
+        </div>
+        {!np.image&&<Fld label="Emoji Fallback" value={np.emoji} onChange={v=>setNp(p=>({...p,emoji:v}))} placeholder="🛒"/>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <Fld label="Price (UGX)" value={np.price} onChange={v=>setNp(p=>({...p,price:v}))} type="number"/>
+          <Fld label="Orig. Price" value={np.origPrice} onChange={v=>setNp(p=>({...p,origPrice:v}))} type="number"/>
+          <Fld label="Stock Qty" value={np.stock} onChange={v=>setNp(p=>({...p,stock:v}))} type="number"/>
+          <Fld label="Unit" value={np.unit} onChange={v=>setNp(p=>({...p,unit:v}))} placeholder="kg/pack"/>
+          <Fld label="Discount %" value={np.discount} onChange={v=>setNp(p=>({...p,discount:v}))} type="number"/>
+          <Fld label="Badge" value={np.badge} onChange={v=>setNp(p=>({...p,badge:v}))} placeholder="Flash/Sale/Local"/>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.textSecondary,marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>Category</div>
+          <select value={np.cat} onChange={e=>setNp(p=>({...p,cat:e.target.value}))} style={{width:"100%",background:T.bgInput,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",color:T.textPrimary,fontSize:13,fontFamily:FONT,outline:"none"}}>
+            {categories.map(c=><option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+          </select>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+          <Toggle on={np.express} onChange={v=>setNp(p=>({...p,express:v}))} label="Express 30-min delivery"/>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <Btn style={{flex:1}} onClick={saveProd}>💾 {editProd?"Save Changes":"Add Product"}</Btn>
+          <Btn outline onClick={()=>setShowProdModal(false)}>Cancel</Btn>
+        </div>
+      </Sheet>
+
+      {/* ── Category Sheet */}
+      <Sheet open={showCatModal} onClose={()=>setShowCatModal(false)} title={editCat?"Edit Category":"New Category"}>
+        <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:14}}>
+          <ImgUpload current={nc.image} onUpload={img=>setNc(c=>({...c,image:img}))} label="Category Image" size={72}/>
+          <div style={{flex:1}}>
+            <Fld label="Category Name" value={nc.name} onChange={v=>setNc(c=>({...c,name:v}))} placeholder="e.g. Fresh Produce"/>
+            <Fld label="Category Code (2-3 letters)" value={nc.id} onChange={v=>setNc(c=>({...c,id:v.toUpperCase()}))} placeholder="e.g. FP"/>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <Fld label="Emoji Icon" value={nc.icon} onChange={v=>setNc(c=>({...c,icon:v}))} placeholder="🛒"/>
+          <Fld label="Brand Color (hex)" value={nc.color} onChange={v=>setNc(c=>({...c,color:v}))} placeholder="#F5B800"/>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:4}}>
+          <Btn style={{flex:1}} onClick={saveCat}>💾 {editCat?"Save Changes":"Add Category"}</Btn>
+          <Btn outline onClick={()=>setShowCatModal(false)}>Cancel</Btn>
+        </div>
+      </Sheet>
+
+      {/* ── Rider Sheet */}
+      <Sheet open={showRiderModal} onClose={()=>setShowRiderModal(false)} title={editRider?"Edit Rider":"New Rider"}>
+        <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:14}}>
+          <ImgUpload current={rf.photo} onUpload={img=>setRf(r=>({...r,photo:img}))} label="Rider Photo" size={72} radius={36}/>
+          <div style={{flex:1}}>
+            <Fld label="Full Name" value={rf.name} onChange={v=>setRf(r=>({...r,name:v}))} placeholder="e.g. Kato Denis"/>
+            <Fld label="Phone Number" value={rf.phone} onChange={v=>setRf(r=>({...r,phone:v}))} placeholder="07XXXXXXXX"/>
+          </div>
+        </div>
+        <Fld label="Motorcycle Registration Plate" value={rf.bike} onChange={v=>setRf(r=>({...r,bike:v.toUpperCase()}))} placeholder="e.g. UAX 123G" style={{fontFamily:"monospace",letterSpacing:1}}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,color:T.textSecondary,marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>Branch</div>
+            <select value={rf.branch} onChange={e=>setRf(r=>({...r,branch:e.target.value}))} style={{width:"100%",background:T.bgInput,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",color:T.textPrimary,fontSize:13,fontFamily:FONT,outline:"none"}}>
+              <option value="Kitintale">Kitintale</option>
+              <option value="Mile 8">Mile 8, Gayaza Rd</option>
+            </select>
+          </div>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,color:T.textSecondary,marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>Status</div>
+            <select value={rf.status} onChange={e=>setRf(r=>({...r,status:e.target.value}))} style={{width:"100%",background:T.bgInput,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px",color:T.textPrimary,fontSize:13,fontFamily:FONT,outline:"none"}}>
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:14}}>
+          <Btn style={{flex:1}} onClick={saveRider}>💾 {editRider?"Save Changes":"Add Rider"}</Btn>
+          <Btn outline onClick={()=>setShowRiderModal(false)}>Cancel</Btn>
+        </div>
+      </Sheet>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════
-// RIDER APP
-// ══════════════════════════════════════════════════════════════════
-function RiderApp({onBack}) {
-  const rider=RIDERS[0];
-  const [myOrders,setMyOrders]=useState(initOrders.slice(0,2).map(o=>({...o,status:o.status==="on_the_way"?"on_the_way":"new"})));
+/* ═══════════════════════════════════════════════════
+   RIDER APP
+═══════════════════════════════════════════════════ */
+function RiderApp({riders,onBack}) {
+  const rider=riders[0];
+  const [myOrders,setMyOrders]=useState(INIT_ORDERS.slice(0,2).map(o=>({...o,status:o.status==="on_the_way"?"on_the_way":"new"})));
   const accept=id=>setMyOrders(os=>os.map(o=>o.id===id?{...o,status:"on_the_way"}:o));
   const deliver=id=>setMyOrders(os=>os.map(o=>o.id===id?{...o,status:"delivered"}:o));
-  const R={
-    wrap:{fontFamily:"'Sora','Nunito',sans-serif",background:"#0A1A0F",minHeight:"100vh",color:"#FFF",paddingBottom:20},
-    hdr:{background:`linear-gradient(135deg,${G.green},#0D5C2B)`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"},
-    card:{background:"#0D2015",borderRadius:14,padding:14,border:"1px solid #1B8C4E44",marginBottom:12},
-    btn:c=>({background:c,border:"none",borderRadius:10,padding:"9px 16px",fontWeight:800,fontSize:12,cursor:"pointer",color:c===G.gold?G.dark:"#fff"}),
-  };
   return (
-    <div style={R.wrap}>
-      <div style={R.hdr}>
-        <div><div style={{fontWeight:900,fontSize:16}}>🏍️ Rider Portal</div><div style={{fontSize:10,color:"#88CC99",marginTop:2}}>Welcome, {rider.name}</div></div>
-        <button onClick={onBack} style={{background:G.gold,border:"none",borderRadius:8,padding:"6px 12px",fontWeight:800,fontSize:11,cursor:"pointer"}}>← Back</button>
+    <div style={{fontFamily:FONT,background:T.bg,minHeight:"100vh",color:T.textPrimary,maxWidth:430,margin:"0 auto"}}>
+      <div style={{background:`linear-gradient(135deg,#16A34A,#14532D)`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:42,height:42,borderRadius:"50%",background:"rgba(255,255,255,0.15)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {rider?.photo?<img src={rider.photo} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:<span style={{fontSize:22}}>🏍️</span>}
+          </div>
+          <div>
+            <div style={{fontWeight:900,fontSize:15,color:"#fff"}}>{rider?.name||"Rider"}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.55)"}}>🏍️ {rider?.bike||"—"} · 📍 {rider?.branch}</div>
+          </div>
+        </div>
+        <Btn small onClick={onBack}>← Back</Btn>
       </div>
       <div style={{padding:14}}>
-        <div style={{...R.card,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div><div style={{fontWeight:800,fontSize:14}}>{rider.name}</div><div style={{fontSize:11,color:"#88CC99",marginTop:2}}>📞 {rider.phone}</div></div>
-          <div style={{background:"#1B8C4E",borderRadius:20,padding:"5px 12px",fontWeight:800,fontSize:11}}>✅ Available</div>
-        </div>
-        <div style={{display:"flex",gap:8,marginBottom:14}}>
-          {[["📦","Today",rider.deliveries],["⭐","Rating","4.9"],["⏱️","Avg","28 min"]].map(([icon,l,v])=>(
-            <div key={l} style={{flex:1,background:"#0D2015",borderRadius:12,padding:10,textAlign:"center",border:"1px solid #1B8C4E33"}}>
-              <div style={{fontSize:18}}>{icon}</div>
-              <div style={{fontWeight:900,fontSize:16,color:G.green,marginTop:3}}>{v}</div>
-              <div style={{fontSize:9,color:"#888"}}>{l}</div>
+        <div style={{display:"flex",gap:10,marginBottom:14}}>
+          {[["📦",rider?.deliveries||0,"Today"],["⭐",rider?.rating||"5.0","Rating"],["⏱️","28 min","Avg"]].map(([ico,v,l])=>(
+            <div key={l} style={{flex:1,background:T.bgCard,borderRadius:12,padding:"12px 8px",textAlign:"center",border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:19}}>{ico}</div>
+              <div style={{fontWeight:900,fontSize:16,color:T.green,marginTop:3}}>{v}</div>
+              <div style={{fontSize:9,color:T.textSecondary}}>{l}</div>
             </div>
           ))}
         </div>
-        <div style={{fontWeight:800,color:G.green,marginBottom:10}}>📦 My Deliveries</div>
-        {myOrders.map(order=>(
-          <div key={order.id} style={R.card}>
-            <div style={{fontWeight:800,fontSize:12,color:G.green}}>{order.id}</div>
-            <div style={{fontSize:11,color:"#CCC",marginTop:4}}>📍 Pickup: <b>{order.branch} Branch</b></div>
-            <div style={{fontSize:11,color:"#CCC"}}>🏠 Drop: <b>{order.location}</b> ({order.dist} km)</div>
-            <div style={{fontSize:11,color:"#CCC"}}>👤 {order.customer} · {order.phone}</div>
-            <div style={{fontSize:10,color:"#888",marginTop:3}}>{order.items.map(i=>`${i.name}×${i.qty}`).join(", ")}</div>
-            <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap",alignItems:"center"}}>
-              <StatusBadge status={order.status}/>
-              {order.status==="new"&&<button onClick={()=>accept(order.id)} style={R.btn(G.green)}>✅ Accept</button>}
-              {order.status==="on_the_way"&&(
-                <><a href={`https://maps.google.com/?q=${order.location},Kampala`} target="_blank" rel="noreferrer" style={{...R.btn("#1565C0"),textDecoration:"none"}}>🗺️ Navigate</a><button onClick={()=>deliver(order.id)} style={R.btn(G.gold)}>✅ Delivered</button></>
-              )}
-              {order.status==="delivered"&&<span style={{color:G.green,fontWeight:700,fontSize:12}}>✅ Completed</span>}
+        <div style={{background:T.bgCard,borderRadius:14,padding:14,marginBottom:14,border:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div><div style={{fontWeight:700,fontSize:13}}>My Status</div><div style={{fontSize:11,color:T.textSecondary,marginTop:2}}>📞 {rider?.phone}</div></div>
+          <StatusPill status={rider?.status||"available"}/>
+        </div>
+        <div style={{fontWeight:800,fontSize:15,marginBottom:10,color:T.green}}>📦 My Deliveries</div>
+        {myOrders.map(o=>(
+          <div key={o.id} style={{background:T.bgCard,borderRadius:14,padding:14,marginBottom:12,border:`1px solid ${T.border}`}}>
+            <div style={{fontWeight:900,fontSize:13,color:T.gold}}>{o.id}</div>
+            <div style={{fontSize:11,color:T.textSecondary,marginTop:5}}>📍 Pickup: <b style={{color:T.textPrimary}}>{o.branch} Branch</b></div>
+            <div style={{fontSize:11,color:T.textSecondary}}>🏠 Drop: <b style={{color:T.textPrimary}}>{o.location}</b> ({o.dist} km)</div>
+            <div style={{fontSize:11,color:T.textSecondary}}>👤 {o.customer} · {o.phone}</div>
+            <div style={{fontSize:10,color:T.textMuted,marginTop:3}}>{o.items.map(i=>`${i.name}×${i.qty}`).join(", ")}</div>
+            <div style={{fontWeight:700,color:T.gold,marginTop:4,fontSize:13}}>{ugx(o.total)}</div>
+            <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
+              <StatusPill status={o.status}/>
+              {o.status==="new"&&<Btn small onClick={()=>accept(o.id)}>✅ Accept</Btn>}
+              {o.status==="on_the_way"&&<>
+                <a href={`https://maps.google.com/?q=${o.location},Kampala`} target="_blank" rel="noreferrer" style={{background:"#1565C0",color:"#fff",border:"none",borderRadius:8,padding:"6px 12px",fontWeight:800,fontSize:11,cursor:"pointer",textDecoration:"none",fontFamily:FONT}}>🗺️ Navigate</a>
+                <Btn small onClick={()=>deliver(o.id)}>✅ Delivered</Btn>
+              </>}
+              {o.status==="delivered"&&<span style={{color:T.green,fontWeight:700,fontSize:12}}>✅ Completed</span>}
             </div>
           </div>
         ))}
-        <div style={{...R.card,background:"#071510"}}><div style={{fontWeight:800,fontSize:12,color:"#88CC99",marginBottom:6}}>📱 WhatsApp Alert Active</div><div style={{fontSize:11,color:"#888"}}>New deliveries arrive on: <b style={{color:"#CCC"}}>{rider.phone}</b></div></div>
+        <div style={{background:"#001A08",border:`1px solid ${T.green}33`,borderRadius:12,padding:14}}>
+          <div style={{fontWeight:800,fontSize:12,color:T.green,marginBottom:4}}>📱 WhatsApp Alerts Active</div>
+          <div style={{fontSize:11,color:T.textSecondary}}>New deliveries sent to: <b style={{color:T.textPrimary}}>{rider?.phone}</b></div>
+        </div>
       </div>
     </div>
   );
 }
 
-// ROOT
+/* ═══════════════════════════════════════════════════
+   ROOT — shared state flows from here to all views
+═══════════════════════════════════════════════════ */
 export default function App() {
   const [mode,setMode]=useState("customer");
+  const [products,setProducts]=useState(INIT_PRODUCTS);
+  const [categories,setCategories]=useState(INIT_CATS);
+  const [riders,setRiders]=useState(INIT_RIDERS);
   return (
-    <div style={{fontFamily:"'Sora',sans-serif"}}>
-      <div style={{background:"#0F0700",display:"flex",justifyContent:"center",gap:0,padding:"7px 0",borderBottom:`2px solid ${G.gold}44`,position:"sticky",top:0,zIndex:100}}>
+    <div style={{fontFamily:FONT,background:T.bg}}>
+      <div style={{background:"#0A0A0A",display:"flex",justifyContent:"center",padding:"6px 0",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,zIndex:200}}>
         {[["customer","🛒 Customer"],["admin","🧑‍💼 Admin"],["rider","🏍️ Rider"]].map(([m,l])=>(
-          <button key={m} onClick={()=>setMode(m)} style={{background:mode===m?G.gold:"transparent",color:mode===m?G.dark:"#888",border:"none",padding:"6px 18px",fontWeight:800,fontSize:11,cursor:"pointer",borderRadius:mode===m?8:0}}>{l}</button>
+          <button key={m} onClick={()=>setMode(m)} style={{background:mode===m?T.gold:"transparent",color:mode===m?T.bg:T.textSecondary,border:"none",padding:"6px 20px",fontWeight:800,fontSize:11,cursor:"pointer",borderRadius:mode===m?8:0,fontFamily:FONT,transition:"all .15s"}}>{l}</button>
         ))}
       </div>
-      {mode==="customer"&&<CustomerApp onAdminUnlock={()=>setMode("admin")}/>}
-      {mode==="admin"&&<AdminDashboard onBack={()=>setMode("customer")}/>}
-      {mode==="rider"&&<RiderApp onBack={()=>setMode("customer")}/>}
+      {mode==="customer"&&<CustomerApp products={products} categories={categories} onAdminUnlock={()=>setMode("admin")}/>}
+      {mode==="admin"&&<AdminDashboard products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} riders={riders} setRiders={setRiders} onBack={()=>setMode("customer")}/>}
+      {mode==="rider"&&<RiderApp riders={riders} onBack={()=>setMode("customer")}/>}
     </div>
   );
 }
