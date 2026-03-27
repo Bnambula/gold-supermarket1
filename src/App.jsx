@@ -272,7 +272,7 @@ function StaffLogin({onLogin,onClose}){
 }
 
 /* ═══════════════ CHECKOUT — PAYMENT SECTION ═══════════════ */
-function PaymentSection({payMethod,setPayMethod,txId,setTxId,cardNum,setCardNum,cardExp,setCardExp,cardCvv,setCardCvv,cardName,setCardName}){
+function PaymentSection({payMethod,setPayMethod,txId,setTxId,waPhone,setWaPhone,cardNum,setCardNum,cardExp,setCardExp,cardCvv,setCardCvv,cardName,setCardName,visaContact,setVisaContact}){
   const [txErr,setTxErr]=useState("");
 
   const validateTx=v=>{
@@ -289,9 +289,9 @@ function PaymentSection({payMethod,setPayMethod,txId,setTxId,cardNum,setCardNum,
       {/* Method selector */}
       <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
         {[["mtn",<MoMoLogo/>],["airtel",<AirtelLogo/>],["visa",<VisaLogo/>]].map(([id,logo])=>(
-          <div key={id} onClick={()=>setPayMethod(id)} style={{flex:1,minWidth:80,padding:"10px 8px",borderRadius:12,border:`2px solid ${payMethod===id?T.gold:T.bdr}`,cursor:"pointer",background:payMethod===id?"#2D1A00":T.bgIn,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div key={id} onClick={()=>setPayMethod(id)} style={{flex:1,minWidth:80,padding:"10px 8px",borderRadius:12,border:`2px solid ${payMethod===id?T.gold:T.bdr}`,cursor:"pointer",background:payMethod===id?"#2D1A00":T.bgIn,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             {logo}
-            {payMethod===id&&<span style={{position:"absolute",color:T.gold,fontSize:16,marginLeft:48,marginTop:-28,fontWeight:900}}>✓</span>}
+            {payMethod===id&&<div style={{position:"absolute",top:4,right:6,color:T.gold,fontSize:13,fontWeight:900}}>✓</div>}
           </div>
         ))}
       </div>
@@ -303,7 +303,7 @@ function PaymentSection({payMethod,setPayMethod,txId,setTxId,cardNum,setCardNum,
             📲 Dial *165# → Send Money → Enter <b>0774 XXX XXX</b>
           </div>
           <Fld label="MoMo Reference Number (10–14 digits)" value={txId} onChange={validateTx} placeholder="e.g. 12345678901234" style={{fontFamily:"monospace"}} error={txErr}/>
-          <Fld label="Your MoMo Phone Number (for WhatsApp receipt)" value={""} onChange={()=>{}} placeholder="07XXXXXXXXX"/>
+          <Fld label="Your MoMo Phone Number (for WhatsApp receipt)" value={waPhone} onChange={setWaPhone} placeholder="07XXXXXXXXX"/>
         </div>
       )}
 
@@ -314,7 +314,7 @@ function PaymentSection({payMethod,setPayMethod,txId,setTxId,cardNum,setCardNum,
             📲 Dial *185# → Send Money → Enter <b>0755 XXX XXX</b>
           </div>
           <Fld label="Airtel Money Reference (10–14 digits)" value={txId} onChange={validateTx} placeholder="e.g. 98765432109" style={{fontFamily:"monospace"}} error={txErr}/>
-          <Fld label="Your Airtel Phone Number (for WhatsApp receipt)" value={""} onChange={()=>{}} placeholder="07XXXXXXXXX"/>
+          <Fld label="Your Airtel Phone Number (for WhatsApp receipt)" value={waPhone} onChange={setWaPhone} placeholder="07XXXXXXXXX"/>
         </div>
       )}
 
@@ -330,8 +330,8 @@ function PaymentSection({payMethod,setPayMethod,txId,setTxId,cardNum,setCardNum,
             <Fld label="Expiry (MM/YY)" value={cardExp} onChange={v=>setCardExp(v.replace(/[^0-9/]/g,"").slice(0,5))} placeholder="12/27"/>
             <Fld label="CVV" value={cardCvv} onChange={v=>setCardCvv(v.replace(/\D/g,"").slice(0,4))} placeholder="123" type="password"/>
           </div>
-          <div style={{fontSize:10,color:T.ts,marginTop:4}}>💬 WhatsApp receipt will be sent to the contact number you provide on this order.</div>
-          <div style={{fontSize:10,color:"#60A5FA",marginTop:6,padding:"6px 10px",background:"#001830",borderRadius:8}}>ℹ Visa payments will be processed via your bank's 3D Secure system. You may receive an OTP on your registered number.</div>
+          <Fld label="WhatsApp Number for Receipt" value={visaContact} onChange={setVisaContact} placeholder="07XXXXXXXXX" style={{marginTop:8}}/>
+          <div style={{fontSize:10,color:"#60A5FA",marginTop:2,padding:"6px 10px",background:"#001830",borderRadius:8}}>ℹ Visa payments are processed via your bank's 3D Secure. You may receive an OTP on your registered card number.</div>
         </div>
       )}
     </div>
@@ -345,6 +345,8 @@ function CustomerApp({products,categories,onStaffAccess}){
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState({});
   const [txId,setTxId]=useState("");
+  const [waPhone,setWaPhone]=useState("");
+  const [visaContact,setVisaContact]=useState("");
   const [payMethod,setPayMethod]=useState("mtn");
   const [cardNum,setCardNum]=useState("");const [cardExp,setCardExp]=useState("");
   const [cardCvv,setCardCvv]=useState("");const [cardName,setCardName]=useState("");
@@ -374,9 +376,10 @@ function CustomerApp({products,categories,onStaffAccess}){
       const d=txId.replace(/\D/g,"").length;
       return alert(`Reference must be 10–14 digits (entered ${d})`);
     }
-    const ref=payMethod==="visa"?`VIS•••• ${cardNum.slice(-4)}`:txId;
-    const o={id:`OGS${Date.now().toString().slice(-6)}`,customer:"You",phone:"07XXXXXXXX",items:cartItems.map(i=>({name:i.name,qty:i.qty,price:i.price})),total,fee,location:"Your Location",dist:3.2,branch:"Kitintale",status:"pending",txId:ref,rider:null,ts:new Date().toLocaleTimeString("en-UG",{hour:"2-digit",minute:"2-digit"}),payMethod};
-    setPlacedOrder(o);setCart({});setTxId("");setCardNum("");setCardExp("");setCardCvv("");setCardName("");setScreen("tracking");
+    const ref=payMethod==="visa"?`VIS•••• ${cardNum.replace(/\s/g,"").slice(-4)}`:txId;
+    const contactPhone=payMethod==="visa"?visaContact:waPhone;
+    const o={id:`OGS${Date.now().toString().slice(-6)}`,customer:"You",phone:contactPhone||"07XXXXXXXX",items:cartItems.map(i=>({name:i.name,qty:i.qty,price:i.price})),total,fee,location:"Your Location",dist:3.2,branch:"Kitintale",status:"pending",txId:ref,rider:null,ts:new Date().toLocaleTimeString("en-UG",{hour:"2-digit",minute:"2-digit"}),payMethod};
+    setPlacedOrder(o);setCart({});setTxId("");setWaPhone("");setVisaContact("");setCardNum("");setCardExp("");setCardCvv("");setCardName("");setScreen("tracking");
   };
 
   const filtered=products.filter(p=>{
@@ -481,17 +484,26 @@ function CustomerApp({products,categories,onStaffAccess}){
           </div>
           {/* WhatsApp notice — only for mobile money */}
           {order.payMethod!=="visa"&&(
-            <div style={{background:"#001830",border:`1px solid #1565C044`,borderRadius:12,padding:14,fontSize:12,color:"#60A5FA"}}>
+            <div style={{background:"#001830",border:`1px solid #1565C044`,borderRadius:12,padding:14,fontSize:12,color:"#60A5FA",marginBottom:14}}>
               <b>📱 WhatsApp Alerts Active</b><br/>
               Updates will be sent to your payment number as your order progresses.
             </div>
           )}
           {order.payMethod==="visa"&&(
-            <div style={{background:"#001830",border:`1px solid #1A1F7144`,borderRadius:12,padding:14,fontSize:12,color:"#60A5FA"}}>
+            <div style={{background:"#001830",border:`1px solid #1A1F7144`,borderRadius:12,padding:14,fontSize:12,color:"#60A5FA",marginBottom:14}}>
               <b>📱 WhatsApp Alerts Active</b><br/>
               Updates will be sent to the contact number you provided at checkout.
             </div>
           )}
+          {/* Continue Shopping */}
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <Btn full style={{padding:14,fontSize:14,borderRadius:12}} onClick={()=>setScreen("home")}>
+              🛒 Continue Shopping
+            </Btn>
+          </div>
+          <Btn full outline style={{padding:12,fontSize:13,borderRadius:12}} onClick={()=>setScreen("tracking")}>
+            📦 View All Orders
+          </Btn>
         </div>
         <Nav/>
         {showStaffLogin&&<StaffLogin onLogin={s=>{setShowStaffLogin(false);onStaffAccess(s);}} onClose={()=>setShowStaffLogin(false)}/>}
@@ -520,7 +532,7 @@ function CustomerApp({products,categories,onStaffAccess}){
             <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,color:T.gold,marginTop:6}}><span>TOTAL</span><span>{ugx(total)}</span></div>
           </div>
         </div>
-        <PaymentSection payMethod={payMethod} setPayMethod={setPayMethod} txId={txId} setTxId={setTxId} cardNum={cardNum} setCardNum={setCardNum} cardExp={cardExp} setCardExp={setCardExp} cardCvv={cardCvv} setCardCvv={setCardCvv} cardName={cardName} setCardName={setCardName}/>
+        <PaymentSection payMethod={payMethod} setPayMethod={setPayMethod} txId={txId} setTxId={setTxId} waPhone={waPhone} setWaPhone={setWaPhone} cardNum={cardNum} setCardNum={setCardNum} cardExp={cardExp} setCardExp={setCardExp} cardCvv={cardCvv} setCardCvv={setCardCvv} cardName={cardName} setCardName={setCardName} visaContact={visaContact} setVisaContact={setVisaContact}/>
         <Btn full disabled={!canPlace()} style={{padding:16,fontSize:15,borderRadius:14}} onClick={placeOrder}>
           {payMethod==="visa"?"🔒 Pay Securely with Visa":"👉 I HAVE PAID — PLACE ORDER"}
         </Btn>
